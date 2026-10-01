@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko" class="viewer">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>해부도 전시관</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Nanum+Gothic+Coding:wght@400;700&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<script src="exhibits.js"></script>
+<script src="exhibits.local.js"></script><!-- 로컬 전용 작품(없으면 건너뜀) -->
+<script src="assets/gallery.js"></script>
+</head>
+<body class="viewer">
+<header class="vbar">
+  <a class="btn back" href="index.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>전시관</a>
+  <div class="vtitle">
+    <span class="vno" id="v-no"></span>
+    <h1 id="v-title">작품을 찾는 중</h1>
+    <span class="vchip" id="v-kind" hidden></span>
+  </div>
+  <nav class="vtools" aria-label="작품 도구">
+    <span class="vby" id="v-by"></span>
+    <a class="btn" id="v-prev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>이전</a>
+    <a class="btn" id="v-next">다음<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+    <button class="btn" id="v-full" type="button" aria-label="전체 화면"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="wide">전체 화면</span></button>
+    <a class="btn" id="v-open" target="_blank" rel="noopener">새 탭<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>
+    <a class="btn" id="v-art" target="_blank" rel="noopener" hidden><span class="wide">claude.ai </span>원본<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>
+  </nav>
+</header>
+<main class="stage">
+  <p class="loading" id="v-loading">작품을 불러오는 중…</p>
+  <iframe id="v-frame" allow="fullscreen"></iframe>
+</main>
+
+<script>
+(function () {
+  const G = window.Gallery;
+  const $ = (id) => document.getElementById(id);
+  const id = new URLSearchParams(location.search).get("id");
+  const x = id ? G.byId(id) : null;
+  const frame = $("v-frame");
+
+  if (!x) {
+    $("v-title").textContent = "작품을 찾지 못했습니다";
+    $("v-loading").textContent = "전시 목록에 없는 작품입니다. 왼쪽 위 ‘전시관’으로 돌아가 다시 골라 주세요.";
+    frame.remove();
+    ["v-prev", "v-next", "v-full", "v-open"].forEach((k) => { $(k).hidden = true; });
+    return;
+  }
+
+  document.title = x.title + " · " + (G.info.name || "해부도 전시관");
+  $("v-no").textContent = x.no;
+  $("v-title").textContent = x.title;
+  $("v-kind").textContent = x.format + " " + x.type;
+  $("v-kind").hidden = false;
+  $("v-by").textContent = G.by(x);
+
+  frame.title = x.title;
+  frame.addEventListener("load", () => { $("v-loading").hidden = true; });
+  frame.src = G.file(x);
+  $("v-open").href = G.file(x);
+  if (x.artifact) {
+    $("v-art").href = x.artifact;
+    $("v-art").hidden = false;
+  }
+
+  const i = G.list.indexOf(x);
+  function link(a, y) {
+    if (y) {
+      a.href = "view.html?id=" + encodeURIComponent(y.id);
+      a.title = y.title;
+    } else {
+      a.removeAttribute("href");
+      a.setAttribute("aria-disabled", "true");
+    }
+  }
+  link($("v-prev"), G.list[i - 1]);
+  link($("v-next"), G.list[i + 1]);
+
+  const full = frame.requestFullscreen || frame.webkitRequestFullscreen;
+  if (!full) $("v-full").hidden = true;
+  $("v-full").addEventListener("click", () => {
+    try {
+      const p = full.call(frame);
+      if (p && p.catch) p.catch(() => {});
+    } catch (e) { /* 전체 화면을 막은 브라우저에서는 아무 일도 하지 않습니다 */ }
+  });
+})();
+</script>
+</body>
+</html>

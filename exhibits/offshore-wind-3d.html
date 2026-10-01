@@ -1,0 +1,1891 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>해상풍력 해부도</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* claude.ai 게시 골격이 넣어 주던 기본값 */
+body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+
+/* 해부도 공용 스타일 (MMC · STATCOM · 태양광 인버터) */
+:root{
+  --bg:#e6eaed; --panel:#f6f8f9; --panel-2:#edf1f3; --ink:#15202a; --ink-2:#44525e; --ink-3:#75838e;
+  --rule:#ccd4da; --rule-2:#dde3e7; --accent:#a4561f; --accent-ink:#fff; --accent-soft:#f3e2d4;
+  --view:#dae1e5; --ground:#ccd3d8; --grid-1:#b1bcc4; --grid-2:#c2cbd1; --edge:#2e3b47;
+  --glass:rgba(246,248,249,.86); --shadow:0 1px 2px rgba(20,30,40,.08),0 6px 20px rgba(20,30,40,.08);
+  --c-semi:#5b6f84; --c-pas:#3d7a73; --c-prot:#b5452e; --c-ctrl:#3a8445; --c-cool:#2f73b7;
+  --c-cond:#b8703a; --c-struct:#98a3ad; --c-ins:#a3947a; --c-mag:#77739a;
+  --f-display:"Barlow Condensed","IBM Plex Sans KR",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans KR",system-ui,-apple-system,"Malgun Gothic",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1418; --panel:#141c22; --panel-2:#1a242b; --ink:#dce4e9; --ink-2:#a1afb9; --ink-3:#6c7b86;
+    --rule:#28343d; --rule-2:#1e2930; --accent:#de8f56; --accent-ink:#1b0f06; --accent-soft:#3a2617;
+    --view:#0b1115; --ground:#111a20; --grid-1:#25323b; --grid-2:#1a252c; --edge:#aebfcb;
+    --glass:rgba(20,28,34,.86); --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1418; --panel:#141c22; --panel-2:#1a242b; --ink:#dce4e9; --ink-2:#a1afb9; --ink-3:#6c7b86;
+  --rule:#28343d; --rule-2:#1e2930; --accent:#de8f56; --accent-ink:#1b0f06; --accent-soft:#3a2617;
+  --view:#0b1115; --ground:#111a20; --grid-1:#25323b; --grid-2:#1a252c; --edge:#aebfcb;
+  --glass:rgba(20,28,34,.86); --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-body)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num,td.q,.kpi b,.tc{font-variant-numeric:tabular-nums}
+
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;padding-inline:16px;padding-block:12px 16px}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px 20px;flex-wrap:wrap}
+.brand h1{margin:0;font:700 32px/1 var(--f-display);letter-spacing:.005em;text-wrap:balance}
+.brand h1 span{color:var(--accent)}
+.brand p{margin:6px 0 0;font:500 12px/1.4 var(--f-mono);color:var(--ink-2);letter-spacing:.02em}
+.levels{display:flex;gap:4px;padding:4px;border:1px solid var(--rule);border-radius:10px;background:var(--panel-2)}
+.levels button{border:0;background:none;border-radius:7px;padding:6px 14px;text-align:left;color:var(--ink-2)}
+.levels button b{display:block;font:600 14px/1.2 var(--f-body)}
+.levels button small{font:500 11px/1.2 var(--f-mono);color:var(--ink-3)}
+.levels button[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:var(--shadow)}
+.levels button[aria-selected="true"] small{color:var(--accent)}
+
+.stage{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:12px}
+.view{position:relative;min-height:0;overflow:hidden;border:1px solid var(--rule);border-radius:12px;background:var(--view)}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+#fade{position:absolute;inset:0;background:var(--view);opacity:0;pointer-events:none}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#leaders{position:absolute;inset:0;width:100%;height:100%}
+#leaders line{stroke:var(--ink-3);stroke-width:1}
+#leaders circle{stroke:var(--panel);stroke-width:1.5}
+.lbl{position:absolute;left:0;top:0;padding:3px 8px 4px;border:1px solid var(--rule);border-radius:6px;background:var(--glass);
+  white-space:nowrap;box-shadow:var(--shadow);transition:opacity .35s;will-change:transform}
+.lbl b{display:block;font:600 12px/1.3 var(--f-body)}
+.lbl i{display:block;font:400 10.5px/1.3 var(--f-mono);font-style:normal;color:var(--ink-2)}
+.lbl.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),var(--shadow)}
+
+.tools{position:absolute;left:12px;top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chipbtn{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--rule);border-radius:8px;background:var(--glass);font-size:12.5px;box-shadow:var(--shadow)}
+.chipbtn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.chipbtn input[type=range]{width:130px;accent-color:var(--accent)}
+.hint{font:500 11.5px var(--f-mono);color:var(--ink-3);padding:6px 2px}
+
+#info{position:absolute;left:12px;top:60px;width:min(330px,calc(100% - 24px));padding:12px 14px 14px;border:1px solid var(--rule);
+  border-radius:10px;background:var(--glass);box-shadow:var(--shadow);backdrop-filter:blur(6px)}
+#info .cat{display:flex;align-items:center;gap:6px;font:500 11px var(--f-mono);color:var(--ink-3);letter-spacing:.04em}
+#info h3{margin:4px 0 2px;font:600 17px/1.3 var(--f-body)}
+#info .spec{font:400 12px/1.45 var(--f-mono);color:var(--ink-2)}
+#info .qty{display:flex;gap:14px;margin:8px 0;padding:6px 0;border-block:1px solid var(--rule-2);font:500 12px var(--f-mono)}
+#info .qty span{color:var(--ink-3);font-weight:400}
+#info p{margin:0;font-size:13px;line-height:1.6;color:var(--ink-2)}
+#info .x{position:absolute;right:6px;top:6px;border:0;background:none;width:28px;height:28px;border-radius:6px;color:var(--ink-3);font-size:18px;line-height:1}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;flex:none}
+
+#schem{position:absolute;right:12px;top:12px;width:250px;padding:10px 12px 8px;border:1px solid var(--rule);border-radius:10px;background:var(--glass);box-shadow:var(--shadow)}
+#schem .hd{display:flex;justify-content:space-between;align-items:center;font:600 12px var(--f-body)}
+#schem .seg{display:flex;border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+#schem .seg button{border:0;background:none;padding:2px 8px;font-size:11.5px;color:var(--ink-2)}
+#schem .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+#schem svg{display:block;width:100%;height:auto;margin-top:6px}
+#schem .w{stroke:var(--ink-3);stroke-width:1.6;fill:none}
+#schem .el{stroke:var(--ink);stroke-width:1.6;fill:var(--panel)}
+#schem text{font:500 10px var(--f-mono);fill:var(--ink-2)}
+#schem .path{stroke:var(--accent);stroke-width:3.2;fill:none;stroke-dasharray:7 6;animation:flow 0.9s linear infinite;stroke-linejoin:round}
+#schem .out{margin-top:4px;font:500 11.5px var(--f-mono);color:var(--ink)}
+@keyframes flow{to{stroke-dashoffset:-13}}
+
+.caption{position:absolute;left:12px;bottom:64px;max-width:min(460px,calc(100% - 24px));padding:9px 13px;border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;background:var(--glass);box-shadow:var(--shadow)}
+.caption .k{font:600 13px/1.2 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.caption h2{margin:2px 0 3px;font:600 17px/1.3 var(--f-body);text-wrap:balance}
+.caption p{margin:0;font-size:13px;line-height:1.55;color:var(--ink-2)}
+
+.transport{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--glass);border-top:1px solid var(--rule)}
+.play{flex:none;width:36px;height:36px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+.play svg{width:14px;height:14px}
+.tc{flex:none;font:500 12px var(--f-mono);color:var(--ink-2);min-width:92px}
+.track{position:relative;flex:1;height:30px;display:flex;gap:2px;align-items:stretch;cursor:pointer;touch-action:none}
+.track .sg{position:relative;flex:1 1 0;min-width:0;border-radius:3px;background:var(--rule-2);overflow:hidden}
+.track .sg span{position:absolute;left:6px;top:50%;transform:translateY(-50%);font:500 10.5px var(--f-mono);color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 8px)}
+.track .sg i{position:absolute;inset:0;width:0;background:var(--accent-soft)}
+.track .sg.on span{color:var(--accent)}
+.track .ph{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--accent);border-radius:1px;pointer-events:none}
+
+.panel{min-height:0;display:flex;flex-direction:column;border:1px solid var(--rule);border-radius:12px;background:var(--panel);overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid var(--rule)}
+.tabs button{flex:1;border:0;background:none;padding:11px 12px;font-weight:600;color:var(--ink-3);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.pane{flex:1;min-height:0;overflow:auto;padding:14px 16px 18px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.kpi{background:var(--panel-2);padding:8px 10px}
+.kpi b{display:block;font:600 22px/1.05 var(--f-display);letter-spacing:.01em}
+.kpi span{font-size:11.5px;color:var(--ink-2)}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 8px;flex-wrap:wrap}
+.seg2{display:flex;border:1px solid var(--rule);border-radius:7px;overflow:hidden}
+.seg2 button{border:0;background:none;padding:5px 10px;font-size:12.5px;color:var(--ink-2)}
+.seg2 button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.btn{border:1px solid var(--rule);background:var(--panel-2);border-radius:7px;padding:5px 11px;font-size:12.5px}
+.btn:hover{border-color:var(--ink-3)}
+.tablewrap{overflow-x:auto}
+table.bom{width:100%;border-collapse:collapse;font-size:13px}
+.bom th{position:sticky;top:-14px;background:var(--panel);z-index:1;text-align:right;font:500 11px var(--f-mono);color:var(--ink-3);padding:6px 6px;border-bottom:1px solid var(--rule);white-space:nowrap}
+.bom th:first-child{text-align:left;padding-left:0}
+.bom tr.grp td{padding:14px 0 5px;font:600 13px/1.2 var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2);border-bottom:1px solid var(--rule)}
+.bom tr.it{cursor:pointer}
+.bom tr.it td{padding:7px 6px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+.bom tr.it td:first-child{padding-left:0}
+.bom tr.it:hover td{background:var(--panel-2)}
+.bom tr.it.sel td{background:var(--accent-soft)}
+.bom tr.it.flash td{animation:flash 1.4s ease-out}
+@keyframes flash{0%{background:var(--accent-soft)}100%{background:transparent}}
+.bom .nm{display:flex;gap:8px;align-items:flex-start}
+.bom .nm .sw{margin-top:5px}
+.bom .nm b{display:block;font-weight:600}
+.bom .nm small{display:block;font:400 11.5px/1.45 var(--f-mono);color:var(--ink-2)}
+.bom td.q{text-align:right;white-space:nowrap;font-family:var(--f-mono);font-size:12.5px}
+.bom td.q.dim{color:var(--ink-3)}
+.bom td.q.tot{font-weight:500;color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:14px;font-size:12px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.note{margin:12px 0 0;font-size:12px;line-height:1.6;color:var(--ink-3)}
+
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.fld label{display:block;font-size:12px;color:var(--ink-2);margin-bottom:3px}
+.fld .in{display:flex;align-items:center;border:1px solid var(--rule);border-radius:7px;background:var(--panel-2);padding-right:9px}
+.fld input{width:100%;min-width:0;border:0;background:none;padding:7px 9px;font:500 14px var(--f-mono);outline:none}
+.fld .in:focus-within{border-color:var(--accent)}
+.fld .in span{font:400 12px var(--f-mono);color:var(--ink-3);white-space:nowrap}
+h4{margin:20px 0 6px;font:600 13px/1.2 var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2)}
+dl.derived{display:grid;grid-template-columns:1fr auto;margin:0;border-top:1px solid var(--rule)}
+dl.derived dt,dl.derived dd{margin:0;padding:6px 0;border-bottom:1px solid var(--rule-2);font-size:13px}
+dl.derived dt{color:var(--ink-2)}
+dl.derived dd{text-align:right;font:500 13px var(--f-mono);font-variant-numeric:tabular-nums}
+dl.derived dd.warn{color:var(--c-prot)}
+ul.assume{margin:0;padding-left:18px;font-size:12.5px;line-height:1.7;color:var(--ink-2)}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);padding:8px 14px;border-radius:8px;background:var(--ink);color:var(--panel);font-size:13px;box-shadow:var(--shadow)}
+
+@media (max-width:1100px){ .stage{grid-template-columns:minmax(0,1fr) 380px} .kpi b{font-size:19px} }
+@media (max-width:900px){
+  html,body{height:auto}
+  .app{height:auto}
+  .stage{grid-template-columns:minmax(0,1fr)}
+  .view{height:min(72vh,600px);min-height:420px}
+  .pane{overflow:visible}
+  .track .sg span{display:none}
+  #schem{width:210px}
+}
+@media (max-width:560px){
+  .brand h1{font-size:26px}
+  .levels{width:100%}
+  .levels button{flex:1;padding:6px 8px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .caption{bottom:60px;padding:8px 10px}
+  .caption h2{font-size:15px}
+  .caption p{font-size:12.5px}
+  #schem{top:auto;bottom:178px;width:190px}
+  .tc{min-width:0;font-size:11px}
+  .form{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){ #schem .path{animation:none} .lbl{transition:none} .bom tr.it.flash td{animation:none} }
+
+/* 녹화 모드 (tools/record_mp4.py) */
+body.rec .tools,body.rec .transport,body.rec #info,body.rec .tabs,body.rec .bar,body.rec .note,body.rec #pane-design{display:none!important}
+body.rec .lbl{transition:none}
+body.rec #schem .path{animation:none}
+body.rec .caption{bottom:14px}
+body.rec #pane-bom{display:flex;flex-direction:column;gap:12px;overflow:hidden}
+body.rec .tablewrap{flex:1;min-height:0;overflow:hidden}
+body.rec .bom th{top:0}
+body.rec .bom tr.it.lit td{background:var(--panel-2)}
+body.rec .bom tr.it.now td{background:var(--accent-soft)}
+body.rec .bom tr.it.now b{color:var(--accent)}
+body.rec-split .stage{grid-template-columns:minmax(0,1fr) 380px}
+body.rec-full .top,body.rec-full .panel{display:none}
+body.rec-full .app{padding:0;grid-template-rows:minmax(0,1fr)}
+body.rec-full .stage{grid-template-columns:minmax(0,1fr)}
+body.rec-full .view{border:0;border-radius:0}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1>해상풍력 <span>해부도</span></h1>
+      <p id="subtitle">400 MW 해상풍력 · 10 MW × 40기 · 로터 200 m · 66/154 kV</p>
+    </div>
+    <nav class="levels" role="tablist" aria-label="보기 수준">
+      <button role="tab" id="lv-station" data-t="0" aria-selected="true"><b>단지</b><small>≈ 10 km</small></button>
+      <button role="tab" id="lv-tower" data-t="16" aria-selected="false"><b>터빈</b><small id="lv-tower-s">≈ 230 m</small></button>
+      <button role="tab" id="lv-sm" data-t="32" aria-selected="false"><b>나셀</b><small>≈ 20 m</small></button>
+    </nav>
+  </header>
+
+  <main class="stage">
+    <section class="view" id="view" aria-label="3D 뷰">
+      <canvas id="gl" tabindex="0" aria-label="해상풍력 단지와 터빈 3D 모델. 드래그로 회전, 휠로 확대, 클릭으로 부품 선택"></canvas>
+      <div id="labels"><svg id="leaders"></svg></div>
+      <div id="fade"></div>
+
+      <div class="tools">
+        <label class="chipbtn" id="explodeCtl" hidden>분해
+          <input type="range" id="explode" min="0" max="100" value="0" aria-label="분해 정도">
+        </label>
+        <button class="chipbtn" id="xray" aria-pressed="false" hidden>밸브홀 투시</button>
+        <span class="hint" id="hint">드래그 회전 · 휠 확대 · 부품 클릭</span>
+      </div>
+
+      <div id="info" hidden>
+        <button class="x" id="infoClose" aria-label="닫기">×</button>
+        <div class="cat"><span class="sw" id="infoSw"></span><span id="infoCat"></span></div>
+        <h3 id="infoName"></h3>
+        <div class="spec" id="infoSpec"></div>
+        <div class="qty" id="infoQty"></div>
+        <p id="infoDesc"></p>
+      </div>
+
+      <div id="schem" hidden>
+        <div class="hd">구동계 · 풀 컨버터
+          <div class="seg" role="group" aria-label="운전 상태">
+            <button data-mode="mppt" aria-pressed="true">MPPT</button><button data-mode="pitch" aria-pressed="false">피치</button><button data-mode="fault" aria-pressed="false">FRT</button>
+          </div>
+        </div>
+        <svg viewBox="0 0 250 176" aria-hidden="true">
+          <path class="w" d="M20 80L20 58M20 80L1 91M20 80L39 91M24 80H40M62 80H72M96 80H106M128 80H152M142 80V96M142 102V120M174 80H184M208 80H232"/>
+          <circle cx="20" cy="80" r="4" class="el"/>
+          <rect class="el" x="40" y="70" width="22" height="20" rx="2"/><text x="44" y="84">GB</text>
+          <circle cx="84" cy="80" r="12" class="el"/><text x="80" y="84">G</text>
+          <rect class="el" x="106" y="70" width="22" height="20" rx="2"/><text x="108" y="84">~=</text>
+          <line x1="134" y1="96" x2="150" y2="96" style="stroke:var(--ink);stroke-width:2.2"/>
+          <line x1="134" y1="102" x2="150" y2="102" style="stroke:var(--ink);stroke-width:2.2"/>
+          <rect class="el" x="136" y="120" width="12" height="22" rx="1"/>
+          <rect class="el" x="152" y="70" width="22" height="20" rx="2"/><text x="154" y="84">=~</text>
+          <circle cx="192" cy="80" r="8" class="el"/><circle cx="200" cy="80" r="8" class="el"/>
+          <line x1="232" y1="60" x2="232" y2="100" style="stroke:var(--ink);stroke-width:3"/>
+          <text x="2" y="112">로터</text><text x="136" y="64">DC</text><text x="104" y="104">MSC</text><text x="150" y="104">GSC</text>
+          <text x="152" y="136">초퍼</text><text x="186" y="104">TR</text><text x="206" y="56">66 kV</text>
+          <polyline class="path" data-path="mppt" points="24,80 232,80"/>
+          <polyline class="path" data-path="pitch" points="1,91 20,80 20,58" style="display:none"/>
+          <polyline class="path" data-path="pitch" points="20,80 39,91" style="display:none"/>
+          <polyline class="path" data-path="pitch" points="24,80 232,80" style="display:none"/>
+          <polyline class="path" data-path="fault" points="72,80 142,80 142,131" style="display:none"/>
+          <polyline class="path" data-path="fault" points="152,80 232,80" style="display:none"/>
+        </svg>
+        <div class="out" id="schemOut">MPPT</div>
+      </div>
+
+      <div class="caption" id="caption">
+        <div class="k" id="capK">01 · 해상풍력 단지</div>
+        <h2 id="capT">해상풍력 단지</h2>
+        <p id="capP"></p>
+      </div>
+
+      <div class="transport">
+        <button class="play" id="play" aria-label="일시정지">
+          <svg viewBox="0 0 14 14" id="icPause"><rect x="2" y="1" width="3.5" height="12" fill="currentColor"/><rect x="8.5" y="1" width="3.5" height="12" fill="currentColor"/></svg>
+          <svg viewBox="0 0 14 14" id="icPlay" hidden><path d="M3 1L13 7L3 13Z" fill="currentColor"/></svg>
+        </button>
+        <span class="tc" id="tc">00:00 / 01:10</span>
+        <div class="track" id="track" role="slider" tabindex="0" aria-label="투어 위치" aria-valuemin="0" aria-valuemax="70" aria-valuenow="0"></div>
+      </div>
+    </section>
+
+    <aside class="panel" aria-label="부품 리스트와 설계 기준">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-bom" aria-selected="true" aria-controls="pane-bom">부품 리스트</button>
+        <button role="tab" id="tab-design" aria-selected="false" aria-controls="pane-design">설계 기준</button>
+      </div>
+      <section class="pane" id="pane-bom" role="tabpanel" aria-labelledby="tab-bom">
+        <div class="kpis" id="kpis"></div>
+        <div class="bar">
+          <div class="seg2" role="group" aria-label="합계 기준">
+            <button id="sc-a" aria-pressed="true">스테이션 1곳</button><button id="sc-b" aria-pressed="false">링크 양단 ×2</button>
+          </div>
+          <button class="btn" id="csv">CSV 복사</button>
+        </div>
+        <div class="tablewrap"><table class="bom" id="bom"></table></div>
+        <div class="legend" id="legend"></div>
+        <p class="note">수량은 설계 기준 탭의 값으로 계산한 개략 산정입니다. 행을 누르면 3D에서 해당 부품을 찾아갑니다.</p>
+      </section>
+      <section class="pane" id="pane-design" role="tabpanel" aria-labelledby="tab-design" hidden>
+        <div class="form" id="form"></div>
+        <div class="bar"><span class="hint">값을 바꾸면 타워 층수와 부품 수량이 다시 계산됩니다.</span><button class="btn" id="reset">기본값</button></div>
+        <h4>산정 결과</h4>
+        <dl class="derived" id="derived"></dl>
+        <h4>가정</h4>
+        <ul class="assume" id="assume"></ul>
+      </section>
+    </aside>
+  </main>
+</div>
+<div id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script>
+/* js/kit.js */
+// 해부도 공용 3D 키트: 재질, 도형 헬퍼, 애자·실드 링 형상 (단위: m)
+(function () {
+  const KIT = (window.KIT = {});
+  const U = (KIT.u = {});
+  if (THREE.ColorManagement) THREE.ColorManagement.legacyMode = false; // hex = sRGB로 해석
+
+  KIT.makeMaterials = function () {
+    const S = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.55, metalness: 0.15 }, o || {}));
+    return {
+      al: S(0xaab4bd, { roughness: 0.38, metalness: 0.75 }),
+      alDark: S(0x6f7b86, { roughness: 0.5, metalness: 0.6 }),
+      cond: S(0xc07a45, { roughness: 0.32, metalness: 0.85 }),
+      semi: S(0x5b6f84, { roughness: 0.45, metalness: 0.35 }),
+      pas: S(0x3d7a73, { roughness: 0.45, metalness: 0.3 }),
+      prot: S(0xb5452e, { roughness: 0.5 }),
+      ctrl: S(0x2f7a3f, { roughness: 0.7 }),
+      chip: S(0x1f262b, { roughness: 0.45 }),
+      ceramic: S(0xe8e3d8, { roughness: 0.3 }),
+      film: S(0xf1ede2, { roughness: 0.6 }),
+      fiber: S(0xe8892b, { roughness: 0.5 }),
+      cool: S(0x2f73b7, { roughness: 0.35 }),
+      coolRet: S(0x79aee0, { roughness: 0.35 }),
+      ins: S(0x8d8a82, { roughness: 0.85 }),
+      porcelain: S(0x7a5a44, { roughness: 0.35 }),
+      mag: S(0x77739a, { roughness: 0.55, metalness: 0.3 }),
+      concrete: S(0xb9bdbe, { roughness: 0.95 }),
+      bldg: S(0xc9ced2, { roughness: 0.8 }),
+      hall: S(0xc3cbd1, { roughness: 0.8, transparent: true, opacity: 1 }),
+      fan: S(0x2a3238, { roughness: 0.6 }),
+      smCap: S(0x3d7a73, { roughness: 0.5, metalness: 0.25 }),
+      smFront: S(0x7d8c9a, { roughness: 0.45, metalness: 0.5 }),
+      ground: new THREE.MeshStandardMaterial({ color: 0xccd3d8, roughness: 1 }),
+      edge: new THREE.LineBasicMaterial({ color: 0x2e3b47, transparent: true, opacity: 0.3 }),
+      glow: new THREE.MeshBasicMaterial({ color: 0xde8f56, transparent: true, opacity: 0.45, depthWrite: false }),
+    };
+  };
+
+  function noPick(o) { o.raycast = function () {}; return o; }
+  U.noPick = noPick;
+
+  U.mesh = function (geo, mat, x, y, z) {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x || 0, y || 0, z || 0);
+    m.castShadow = m.receiveShadow = true;
+    return m;
+  };
+  U.box = (w, h, d, mat, x, y, z) => U.mesh(new THREE.BoxGeometry(w, h, d), mat, x, y, z);
+  U.cyl = function (rt, rb, h, mat, x, y, z, axis, seg) {
+    const m = U.mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 28), mat, x, y, z);
+    if (axis === 'x') m.rotation.z = Math.PI / 2;
+    if (axis === 'z') m.rotation.x = Math.PI / 2;
+    return m;
+  };
+  U.tube = function (pts, r, mat, seg) {
+    const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(p[0], p[1], p[2])), false, 'catmullrom', 0.1);
+    return U.mesh(new THREE.TubeGeometry(curve, seg || Math.max(8, pts.length * 10), r, 8, false), mat);
+  };
+  // 직선 구간만으로 된 관 (도체, 배관)
+  U.poly = function (pts, r, mat) {
+    const path = new THREE.CurvePath();
+    for (let i = 0; i < pts.length - 1; i++)
+      path.add(new THREE.LineCurve3(new THREE.Vector3(...pts[i]), new THREE.Vector3(...pts[i + 1])));
+    return U.mesh(new THREE.TubeGeometry(path, (pts.length - 1) * 2, r, 8, false), mat);
+  };
+  U.edges = function (obj, mat, angle) {
+    obj.traverse((o) => {
+      if (o.isMesh && !o.isInstancedMesh && !o.userData.noEdge) {
+        const e = noPick(new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry, angle || 30), mat));
+        e.userData.isEdge = true;
+        o.add(e);
+      }
+    });
+    return obj;
+  };
+  // 부품별 하이라이트를 위해 재질 복제
+  U.own = function (obj) {
+    obj.traverse((o) => {
+      if (o.isMesh && o.material && o.material.isMeshStandardMaterial) {
+        o.material = o.material.clone();
+        o.userData.baseEmissive = o.material.emissive.clone();
+      }
+    });
+  };
+  const GLOW = new THREE.Color(0xd9793a);
+  U.glow = function (obj, amt) {
+    obj.traverse((o) => {
+      if (o.isMesh && o.userData.baseEmissive) {
+        if (amt > 0) { o.material.emissive.copy(GLOW); o.material.emissiveIntensity = amt; }
+        else { o.material.emissive.copy(o.userData.baseEmissive); o.material.emissiveIntensity = 1; }
+      }
+    });
+  };
+  U.center = function (obj) {
+    const b = new THREE.Box3().setFromObject(obj);
+    return b.isEmpty() ? obj.position.clone() : b.getCenter(new THREE.Vector3());
+  };
+  const smooth = (U.smooth = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x)));
+  const clamp01 = (U.clamp01 = (x) => Math.min(1, Math.max(0, x)));
+
+  U.insulatorGeo = function (h, rc, rs, pitch) {
+    const v = (x, y) => new THREE.Vector2(x, y);
+    const pts = [v(0.001, 0), v(rs * 0.85, 0), v(rs * 0.85, 0.06), v(rc, 0.08)];
+    for (let y = 0.14; y < h - 0.16; y += pitch) pts.push(v(rc, y), v(rs, y + 0.012), v(rs, y + 0.024), v(rc, y + 0.05));
+    pts.push(v(rc, h - 0.08), v(rs * 0.85, h - 0.06), v(rs * 0.85, h), v(0.001, h));
+    return new THREE.LatheGeometry(pts, 18);
+  }
+  U.ringGeo = function (hx, hz, rc, rt) {
+    const pts = [];
+    const cs = [[hx - rc, hz - rc, 0], [-(hx - rc), hz - rc, 0.5], [-(hx - rc), -(hz - rc), 1], [hx - rc, -(hz - rc), 1.5]];
+    for (const [cx, cz, a0] of cs) for (let i = 0; i <= 6; i++) {
+      const a = (a0 + i / 12) * Math.PI;
+      pts.push(new THREE.Vector3(cx + rc * Math.cos(a), 0, cz + rc * Math.sin(a)));
+    }
+    return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true, 'centripetal'), 160, rt, 8, true);
+  }
+  U.inst = function (geo, mat, n, id, list) {
+    const m = new THREE.InstancedMesh(geo, mat, n);
+    m.castShadow = m.receiveShadow = true;
+    m.frustumCulled = false; // r147은 인스턴스 전체 경계구를 계산하지 않음
+    m.userData.part = id;
+    list.push(m);
+    return m;
+  }
+
+  // 분해도 조립체: piece()로 부품 조각을 등록하고 finish()로 엔진이 쓰는 인터페이스를 얻는다.
+  // off = 완전 분해 시 이동량, delay = 분해 순서(0–maxDelay), extra.role/labelHere/fade/ghost 선택
+  KIT.assembly = function (M, maxDelay) {
+    const root = new THREE.Group(), pieces = [];
+    const MAXD = maxDelay || 0.4;
+    function piece(id, obj, off, delay, extra) {
+      U.own(obj);
+      U.edges(obj, M.edge, 35);
+      obj.traverse((o) => { if (o.isMesh) o.userData.part = id; });
+      root.add(obj);
+      const p = Object.assign({ id, obj, base: obj.position.clone(), off: new THREE.Vector3(off[0], off[1], off[2]), delay: delay || 0 }, extra || {});
+      p.anchor = U.center(obj).sub(obj.position);
+      pieces.push(p);
+      return p;
+    }
+    function finish(floorId, floorBase) { // floorBase: 바닥 조각의 아랫면 높이 (기본 0)
+      const parts = {};
+      for (const p of pieces) (parts[p.id] = parts[p.id] || []).push(p);
+      function setExplode(E) {
+        for (const p of pieces) {
+          const a = smooth(clamp01((E - p.delay) / (1 - MAXD)));
+          p.obj.position.copy(p.base).addScaledVector(p.off, a);
+          if (p.ghost != null) { // 분해될수록 반투명해지는 외함 패널
+            const op = 1 - (1 - p.ghost) * a;
+            p.obj.traverse((o) => { if (o.isMesh) { o.material.transparent = op < 0.999; o.material.opacity = op; o.material.depthWrite = op > 0.6; } });
+          }
+          if (p.fade) {
+            const op = 1 - clamp01(E / 0.25);
+            p.obj.visible = op > 0.02;
+            p.obj.traverse((o) => { if (o.isMesh) { o.material.transparent = true; o.material.opacity = op; } else if (o.userData.isEdge) o.visible = op > 0.5; });
+          }
+        }
+      }
+      function anchor(id, out) {
+        const list = parts[id];
+        if (!list) return null;
+        const p = list.find((q) => q.labelHere) || list[0];
+        return out.copy(p.anchor).add(p.obj.position).applyMatrix4(root.matrixWorld);
+      }
+      function glow(id, amt, role) {
+        for (const p of parts[id] || []) if (!role || p.role === role) U.glow(p.obj, amt);
+      }
+      const pick = [];
+      root.traverse((o) => { if (o.isMesh) pick.push(o); });
+      setExplode(0);
+      return { root, pieces, parts, pick, setExplode, anchor, glow, floorY: () => parts[floorId][0].obj.position.y + (floorBase || 0) };
+    }
+    return { root, piece, finish };
+  };
+})();
+</script>
+<script>
+/* js/engine.js */
+// 해부도 엔진: 3D 투어 · 라벨 · 부품 리스트 · 설계 기준 · 녹화 모드.
+// 페이지는 설계 모듈, 모델 빌더, 투어 설정을 넘겨 ANATOMY.run(cfg)을 부른다. 설정 항목은 js/mmc.js 참고.
+// 장면은 둘: 'station'(현장 전체, 확대 구간 포함)과 'sm'(부품 하나의 분해도).
+(function () {
+  const U = KIT.u;
+  window.ANATOMY = { run };
+
+  function run(cfg) {
+    const D = cfg.design, fmt = D.fmt;
+    const $ = (id) => document.getElementById(id);
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const still = location.hash === '#thumb'; // 전시관 썸네일 촬영 때는 투어를 멈추고 한 장면에 고정
+    const wide = matchMedia('(min-width: 901px)');
+    const { T_END, SWITCH, CH } = cfg;
+    const hallAt = cfg.hallAt || null;
+    const XRAY = cfg.xrayPart || 'hall'; // hallAt으로 반투명해지는 외피 부품 id (M.hall 재질)
+    const chAt = (t) => { for (let i = CH.length - 1; i >= 0; i--) if (t >= CH[i].t0) return i; return 0; };
+    const sceneAt = (t) => (t < SWITCH[0] || t >= SWITCH[1] ? 'station' : 'sm');
+    const inTowerAt = (t) => t >= cfg.towerWindow[0] && t < cfg.towerWindow[1];
+
+    let inputs = Object.assign({}, D.DEFAULTS);
+    let d = D.compute(inputs);
+    const st = { t: 0, playing: false, scene: null, manualExplode: null, xray: null, schemMode: null, sel: null, hover: null,
+      scope: 'a', forceCam: true, blend: null, tween: null, pendingFocus: null };
+    let lastCap = '', lastGlow = '', lastMode = '', rec = null;
+    let station = null, detail = null, detailKey = null, K = null;
+
+    // ================= 패널 (WebGL 없어도 동작) =================
+    const CATS = D.CATS, BOM = D.BOM, BY = D.BOM_BY_ID, COLS = cfg.columns, SCOPE = cfg.scope;
+    const bomEl = $('bom');
+    const mult = () => (SCOPE && st.scope === 'b' ? SCOPE.mult : 1);
+    function renderBOM() {
+      const m = mult();
+      const cell = (v) => `<td class="q${v == null ? ' dim' : ''}">${v == null ? '—' : fmt(v)}</td>`;
+      let h = `<thead><tr><th>품목 · 사양</th><th>${COLS[0]}</th><th>${COLS[1]}</th><th>${m > 1 ? SCOPE.col : COLS[2]}</th></tr></thead><tbody>`;
+      for (const lv of Object.keys(D.LEVELS)) {
+        h += `<tr class="grp"><td colspan="4">${D.LEVELS[lv]}</td></tr>`;
+        for (const b of BOM.filter((x) => x.lv === lv)) {
+          const q = D.qty(b, d);
+          h += `<tr class="it${st.sel === b.id ? ' sel' : ''}" data-id="${b.id}"><td><div class="nm"><span class="sw" style="background:${CATS[b.cat].color}"></span><div><b>${b.name}</b><small>${b.spec(d)}</small></div></div></td>` +
+            cell(q.sm) + cell(q.arm) + `<td class="q tot">${fmt(q.st * m)}</td></tr>`;
+        }
+      }
+      bomEl.innerHTML = h + '</tbody>';
+      $('kpis').innerHTML = cfg.kpis(d).map(([n, v]) => `<div class="kpi"><b>${fmt(v * m)}</b><span>${n}</span></div>`).join('');
+      if (rec) rec.key = '';
+    }
+    $('legend').innerHTML = Object.values(CATS).map((c) => `<span><i class="sw" style="background:${c.color}"></i>${c.name}</span>`).join('');
+    const rowOf = (id) => bomEl.querySelector(`tr[data-id="${id}"]`);
+    function flashRow(id) {
+      const r = rowOf(id);
+      if (!r || $('pane-bom').hidden) return;
+      r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash');
+    }
+    bomEl.addEventListener('click', (e) => { const r = e.target.closest('tr.it'); if (r) navigateTo(r.dataset.id); });
+    bomEl.addEventListener('mouseover', (e) => { const r = e.target.closest('tr.it'); st.hover = r ? r.dataset.id : null; });
+    bomEl.addEventListener('mouseleave', () => (st.hover = null));
+
+    if (SCOPE) {
+      $('sc-a').textContent = SCOPE.a; $('sc-b').textContent = SCOPE.b;
+      const setScope = (s) => {
+        st.scope = s;
+        $('sc-a').setAttribute('aria-pressed', s === 'a'); $('sc-b').setAttribute('aria-pressed', s === 'b');
+        renderBOM();
+      };
+      $('sc-a').onclick = () => setScope('a');
+      $('sc-b').onclick = () => setScope('b');
+    } else $('sc-a').parentElement.hidden = true;
+
+    let toastTimer;
+    function toast(msg) {
+      const el = $('toast'); el.textContent = msg; el.hidden = false;
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => (el.hidden = true), 2600);
+    }
+    $('csv').onclick = () => {
+      const esc = (v) => (/[",\n]/.test(v) ? `"${String(v).replace(/"/g, '""')}"` : v);
+      const rows = [['구분', '분류', '품목', '사양', ...COLS, ...(SCOPE ? [SCOPE.col] : [])]];
+      for (const b of BOM) {
+        const q = D.qty(b, d);
+        rows.push([D.LEVELS[b.lv], CATS[b.cat].name, b.name, b.spec(d), q.sm ?? '', q.arm ?? '', q.st, ...(SCOPE ? [q.st * SCOPE.mult] : [])]);
+      }
+      const csv = rows.map((r) => r.map((v) => esc(String(v))).join(',')).join('\n');
+      const fallback = () => {
+        const ta = document.createElement('textarea'); ta.value = csv; document.body.appendChild(ta); ta.select();
+        let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+        ta.remove();
+        toast(ok ? 'CSV를 복사했습니다. 엑셀에 붙여 넣으세요.' : '복사하지 못했습니다. 브라우저의 클립보드 권한을 확인하세요.');
+      };
+      try { navigator.clipboard.writeText(csv).then(() => toast('CSV를 복사했습니다. 엑셀에 붙여 넣으세요.'), fallback); }
+      catch (e) { fallback(); }
+    };
+
+    function setTab(which) {
+      const bom = which === 'bom';
+      $('tab-bom').setAttribute('aria-selected', bom); $('tab-design').setAttribute('aria-selected', !bom);
+      $('pane-bom').hidden = !bom; $('pane-design').hidden = bom;
+    }
+    $('tab-bom').onclick = () => setTab('bom');
+    $('tab-design').onclick = () => setTab('design');
+
+    $('form').innerHTML = D.INPUTS.map((f) => `<div class="fld"><label for="in-${f.k}">${f.label}</label><div class="in"><input id="in-${f.k}" type="number" inputmode="decimal" min="${f.min}" max="${f.max}" step="${f.step}" value="${inputs[f.k]}"><span>${f.unit}</span></div></div>`).join('');
+    $('assume').innerHTML = D.ASSUME.map((a) => `<li>${a}</li>`).join('');
+    function renderDerived() {
+      $('derived').innerHTML = D.derivedRows(d).map(([k, v, w]) => `<dt>${k}</dt><dd class="${w ? 'warn' : ''}">${v}</dd>`).join('');
+      const h = cfg.header(d);
+      $('subtitle').textContent = h.subtitle;
+      for (const id in h.tabs || {}) if ($(id)) $(id).textContent = h.tabs[id];
+    }
+    let designTimer;
+    function applyDesign() {
+      const raw = {};
+      for (const f of D.INPUTS) raw[f.k] = $('in-' + f.k).value;
+      inputs = D.clampInputs(raw);
+      d = D.compute(inputs);
+      renderBOM(); renderDerived(); lastCap = ''; lastMode = '';
+      if (gl) { rebuildStation(); rebuildDetail(); }
+    }
+    $('form').addEventListener('input', () => { clearTimeout(designTimer); designTimer = setTimeout(applyDesign, 350); });
+    $('form').addEventListener('change', (e) => {
+      const f = D.INPUTS.find((x) => 'in-' + x.k === e.target.id);
+      if (f) e.target.value = D.clampInputs({ ...inputs, [f.k]: e.target.value })[f.k];
+    });
+    $('reset').onclick = () => { for (const f of D.INPUTS) $('in-' + f.k).value = D.DEFAULTS[f.k]; applyDesign(); };
+
+    function showInfo(id) {
+      const b = id && BY[id];
+      $('info').hidden = !b;
+      if (!b) return;
+      const q = D.qty(b, d);
+      $('infoSw').style.background = CATS[b.cat].color;
+      $('infoCat').textContent = `${CATS[b.cat].name} · ${D.LEVELS[b.lv]}`;
+      $('infoName').textContent = b.name;
+      $('infoSpec').textContent = b.spec(d);
+      $('infoQty').innerHTML = [[COLS[0], q.sm], [COLS[1], q.arm], [COLS[2], q.st]].filter((x) => x[1] != null)
+        .map(([k, v]) => `<div><span>${k}</span> ${fmt(v)}</div>`).join('');
+      $('infoDesc').textContent = b.desc;
+    }
+    $('infoClose').onclick = () => select(null);
+    function select(id, from3D) {
+      if (id && id.startsWith('grp:')) id = cfg.groupPart;
+      st.sel = id;
+      bomEl.querySelectorAll('tr.it.sel').forEach((r) => r.classList.remove('sel'));
+      const r = id && rowOf(id);
+      if (r) { r.classList.add('sel'); if (from3D && wide.matches && !$('pane-bom').hidden) r.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+      showInfo(id);
+    }
+    renderBOM(); renderDerived();
+
+    // ================= 3D =================
+    const canvas = $('gl'), view = $('view');
+    let gl = null;
+    try { gl = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: still }); } catch (e) { gl = null; }
+    if (!gl) {
+      view.insertAdjacentHTML('beforeend', '<p style="position:absolute;left:16px;right:16px;top:40%;text-align:center;color:var(--ink-2)">이 브라우저에서 WebGL을 쓸 수 없어 3D를 표시하지 못했습니다. 부품 리스트는 그대로 볼 수 있습니다.</p>');
+      return;
+    }
+    gl.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    gl.setClearColor(0x000000, 0);
+    gl.outputEncoding = THREE.sRGBEncoding;
+    gl.toneMapping = THREE.ACESFilmicToneMapping;
+    gl.shadowMap.enabled = true;
+    gl.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    const M = KIT.makeMaterials();
+    let env = null;
+    if (THREE.RoomEnvironment) { const pm = new THREE.PMREMGenerator(gl); env = pm.fromScene(new THREE.RoomEnvironment(), 0.04).texture; pm.dispose(); }
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1500);
+    const controls = new THREE.OrbitControls(camera, canvas);
+    controls.enableDamping = true; controls.dampingFactor = 0.08; controls.screenSpacePanning = true;
+
+    const SITE = cfg.site, DET = cfg.detail;
+    const sS = new THREE.Scene();
+    sS.environment = env;
+    sS.fog = new THREE.Fog(0xdae1e5, SITE.fog[0], SITE.fog[1]);
+    sS.add(new THREE.HemisphereLight(0xffffff, 0x88929a, 0.35));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.25);
+    sun.position.set(...SITE.sun); sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    Object.assign(sun.shadow.camera, { left: -SITE.shadow, right: SITE.shadow, top: SITE.shadow, bottom: -SITE.shadow, near: 10, far: SITE.shadowFar });
+    sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
+    sS.add(sun);
+    if (!SITE.noGround) { // 해상 장면처럼 현장 모델이 자기 바닥(바다)을 그릴 때는 생략
+      const ground = new THREE.Mesh(new THREE.PlaneGeometry(SITE.ground, SITE.ground), M.ground);
+      ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02; ground.receiveShadow = true;
+      sS.add(ground);
+    }
+    let grid = null;
+
+    const sM = new THREE.Scene();
+    sM.environment = env;
+    sM.add(new THREE.HemisphereLight(0xffffff, 0x88929a, 0.4));
+    const key = new THREE.DirectionalLight(0xffffff, 1.2);
+    key.position.set(...DET.key); key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    Object.assign(key.shadow.camera, { left: -DET.shadow, right: DET.shadow, top: DET.shadow, bottom: -DET.shadow, near: 0.2, far: DET.shadowFar });
+    key.shadow.bias = -0.0005; key.shadow.normalBias = 0.01;
+    sM.add(key);
+    const rim = new THREE.DirectionalLight(0xffffff, 0.45); rim.position.set(...DET.rim); sM.add(rim);
+    const floor = new THREE.Group();
+    const shadowPlane = new THREE.Mesh(new THREE.PlaneGeometry(DET.grid[0] * 1.6, DET.grid[0] * 1.6), new THREE.ShadowMaterial({ opacity: 0.16 }));
+    shadowPlane.rotation.x = -Math.PI / 2; shadowPlane.receiveShadow = true; floor.add(shadowPlane);
+    let smGrid = null;
+    sM.add(floor);
+
+    const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    const isDark = () => {
+      const a = document.documentElement.getAttribute('data-theme');
+      return a ? a === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    };
+    function applyTheme() {
+      const dark = isDark();
+      sS.fog.color.set(cssVar('--view'));
+      M.ground.color.set(cssVar('--ground'));
+      M.edge.color.set(cssVar('--edge')); M.edge.opacity = dark ? 0.22 : 0.3;
+      const g1 = cssVar('--grid-1'), g2 = cssVar('--grid-2');
+      if (grid) { sS.remove(grid); grid.geometry.dispose(); grid = null; }
+      if (SITE.grid) { grid = new THREE.GridHelper(SITE.grid[0], SITE.grid[1], g1, g2); grid.position.y = 0.01; sS.add(grid); }
+      if (smGrid) { floor.remove(smGrid); smGrid.geometry.dispose(); }
+      smGrid = new THREE.GridHelper(DET.grid[0], DET.grid[1], g1, g2); smGrid.material.transparent = true; smGrid.material.opacity = 0.7; floor.add(smGrid);
+      gl.toneMappingExposure = dark ? 0.9 : 1.05;
+      if (cfg.onTheme) cfg.onTheme(M, dark);
+    }
+    applyTheme();
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+    new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    function disposeTree(root) {
+      root.traverse((o) => {
+        if (o.geometry) o.geometry.dispose();
+        if (o.material && o.userData.baseEmissive) o.material.dispose();
+      });
+    }
+    function rebuildStation() {
+      if (station) { sS.remove(station.root); station.dispose ? station.dispose() : disposeTree(station.root); }
+      station = cfg.buildStation(d, M);
+      sS.add(station.root);
+      K = cfg.stationKeys(station, d);
+      lastGlow = '';
+    }
+    function rebuildDetail() {
+      const k = cfg.detailKey ? cfg.detailKey(d) : 'static';
+      if (detail && k === detailKey) return;
+      if (detail) { sM.remove(detail.root); disposeTree(detail.root); }
+      detail = cfg.buildDetail(M, d);
+      sM.add(detail.root);
+      detailKey = k; lastGlow = '';
+    }
+
+    const cr = (a, b, c, e, u) => 0.5 * (2 * b + (-a + c) * u + (2 * a - 5 * b + 4 * c - e) * u * u + (-a + 3 * b - 3 * c + e) * u * u * u);
+    function camAt(keys, t, P, Q) {
+      const n = keys.length;
+      if (t <= keys[0].t) { P.fromArray(keys[0].p); Q.fromArray(keys[0].q); }
+      else if (t >= keys[n - 1].t) { P.fromArray(keys[n - 1].p); Q.fromArray(keys[n - 1].q); }
+      else {
+        let i = 0; while (i < n - 2 && t >= keys[i + 1].t) i++;
+        const k0 = keys[Math.max(0, i - 1)], k1 = keys[i], k2 = keys[i + 1], k3 = keys[Math.min(n - 1, i + 2)];
+        const u = (t - k1.t) / (k2.t - k1.t);
+        for (let j = 0; j < 3; j++) {
+          P.setComponent(j, cr(k0.p[j], k1.p[j], k2.p[j], k3.p[j], u));
+          Q.setComponent(j, cr(k0.q[j], k1.q[j], k2.q[j], k3.q[j], u));
+        }
+      }
+      // 세로 화면에서는 뒤로 물러나 전체가 들어오게
+      const k = camera.aspect < 1.15 ? Math.min(2.2, 1.3 / camera.aspect) : 1;
+      if (k !== 1) P.sub(Q).multiplyScalar(k).add(Q);
+    }
+
+    const explodeEl = $('explode'), xrayEl = $('xray'), schemEl = $('schem');
+    const pathEls = [...document.querySelectorAll('#schem [data-path]')];
+    const modeBtns = [...document.querySelectorAll('#schem [data-mode]')];
+    function setScene(name) {
+      st.scene = name;
+      const c = name === 'sm' ? DET.cam : SITE.cam;
+      camera.near = c.near; camera.far = c.far;
+      controls.minDistance = c.min; controls.maxDistance = c.max; controls.maxPolarAngle = Math.PI * c.polar;
+      camera.updateProjectionMatrix();
+      $('explodeCtl').hidden = name !== 'sm';
+      xrayEl.hidden = name !== 'station' || !hallAt;
+      lastGlow = '';
+    }
+
+    function setPlaying(on, cut) {
+      if (on) {
+        if (st.t >= T_END - 0.05) { st.t = 0; st.forceCam = true; }
+        st.manualExplode = null; st.xray = null; st.schemMode = null; st.tween = null;
+        st.blend = cut ? null : { p: camera.position.clone(), q: controls.target.clone(), start: performance.now(), dur: 1100 };
+      }
+      st.playing = on;
+      $('icPlay').hidden = on; $('icPause').hidden = !on;
+      $('play').setAttribute('aria-label', on ? '일시정지' : '재생');
+      $('hint').textContent = on ? '드래그하면 멈추고 직접 둘러봅니다' : '드래그 회전 · 휠 확대 · 부품 클릭';
+    }
+    function seek(t) {
+      st.t = Math.min(T_END, Math.max(0, t));
+      st.forceCam = true; st.blend = null; st.tween = null;
+      st.manualExplode = null; st.xray = null; st.schemMode = null;
+    }
+    $('play').onclick = () => setPlaying(!st.playing);
+    controls.addEventListener('start', () => { st.tween = null; if (st.playing) setPlaying(false); });
+    document.querySelectorAll('.levels button').forEach((b) => (b.onclick = () => seek(Number(b.dataset.t))));
+
+    const track = $('track');
+    track.setAttribute('aria-valuemax', T_END);
+    const segs = CH.map((c) => {
+      const s = document.createElement('div');
+      s.className = 'sg'; s.style.flexGrow = c.t1 - c.t0;
+      s.innerHTML = `<i></i><span>${c.s}</span>`;
+      track.appendChild(s);
+      return s;
+    });
+    const ph = document.createElement('div'); ph.className = 'ph'; track.appendChild(ph);
+    function tFromX(clientX) {
+      for (let i = 0; i < segs.length; i++) {
+        const r = segs[i].getBoundingClientRect();
+        if (clientX <= r.right + 1 || i === segs.length - 1)
+          return CH[i].t0 + U.clamp01((clientX - r.left) / r.width) * (CH[i].t1 - CH[i].t0);
+      }
+      return 0;
+    }
+    let scrubbing = false;
+    track.addEventListener('pointerdown', (e) => { scrubbing = true; track.setPointerCapture(e.pointerId); seek(tFromX(e.clientX)); });
+    track.addEventListener('pointermove', (e) => { if (scrubbing) seek(tFromX(e.clientX)); });
+    track.addEventListener('pointerup', () => (scrubbing = false));
+    track.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { seek(st.t + 2); e.preventDefault(); }
+      if (e.key === 'ArrowLeft') { seek(st.t - 2); e.preventDefault(); }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.code !== 'Space' || /INPUT|TEXTAREA|BUTTON|SELECT/.test(e.target.tagName)) return;
+      e.preventDefault(); setPlaying(!st.playing);
+    });
+
+    explodeEl.addEventListener('input', (e) => { if (st.playing) setPlaying(false); st.manualExplode = e.target.value / 100; });
+    xrayEl.onclick = () => { st.xray = !(st.xray != null ? st.xray : hallAt(st.t) < 0.5); };
+    modeBtns.forEach((b) => (b.onclick = () => { if (st.playing) setPlaying(false); st.schemMode = b.dataset.mode; }));
+
+    // 3D 선택
+    const ray = new THREE.Raycaster();
+    const ndc = new THREE.Vector2();
+    const visibleChain = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
+    function hitPart(e) {
+      const r = canvas.getBoundingClientRect();
+      ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      let list;
+      if (st.scene === 'sm') list = detail.pick;
+      else { const hallOn = !hallAt || M.hall.opacity > 0.6; list = station.pickList.filter((m) => hallOn || m.userData.part !== XRAY); }
+      for (const h of ray.intersectObjects(list, false)) if (visibleChain(h.object) && h.object.userData.part) return h.object.userData.part;
+      return null;
+    }
+    let down = null, lastMove = 0;
+    canvas.addEventListener('pointerdown', (e) => (down = { x: e.clientX, y: e.clientY }));
+    canvas.addEventListener('pointerup', (e) => {
+      if (!down) return;
+      const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+      down = null;
+      if (moved > 5) return;
+      const id = hitPart(e);
+      select(id && id === st.sel ? null : id, true);
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (down || e.pointerType !== 'mouse') return;
+      const now = performance.now();
+      if (now - lastMove < 80) return;
+      lastMove = now;
+      canvas.style.cursor = hitPart(e) ? 'pointer' : 'grab';
+    });
+
+    // 부품 리스트 → 3D로 이동
+    function navigateTo(id) {
+      const b = BY[id]; if (!b) return;
+      select(id);
+      const n = cfg.nav(id, b);
+      if (st.playing) setPlaying(false);
+      const E = st.manualExplode != null ? st.manualExplode : cfg.explodeAt(st.t);
+      const inTower = st.scene === 'station' && inTowerAt(st.t);
+      const ok = n.zone === 'sm' ? st.scene === 'sm' && E >= 0.5 : n.zone === 'tower' ? inTower : st.scene === 'station' && !inTower;
+      if (!ok) seek(n.t);
+      st.pendingFocus = { id, dist: n.dist };
+    }
+
+    // 라벨
+    const lblLayer = $('labels'), svg = $('leaders');
+    const SVGNS = 'http://www.w3.org/2000/svg';
+    const labels = new Map();
+    const groupOf = (id) => station.groups.find((x) => x.key === id.slice(4));
+    function labelInfo(id) {
+      if (id.startsWith('grp:')) {
+        const g = groupOf(id);
+        return { name: g ? g.name : id, sub: cfg.groupSub(d), color: CATS[BY[cfg.groupPart].cat].color };
+      }
+      const b = BY[id];
+      return { name: b.name, sub: b.short ? b.short(d) : b.spec(d), color: CATS[b.cat].color };
+    }
+    function labelEl(id) {
+      let L = labels.get(id);
+      if (!L) {
+        const el = document.createElement('div'); el.className = 'lbl'; el.style.opacity = '0';
+        lblLayer.appendChild(el);
+        const line = document.createElementNS(SVGNS, 'line');
+        const dot = document.createElementNS(SVGNS, 'circle'); dot.setAttribute('r', '3.5');
+        svg.appendChild(line); svg.appendChild(dot);
+        L = { el, line, dot, key: '', w: 0, h: 0, since: 0 };
+        labels.set(id, L);
+      }
+      const info = labelInfo(id), k = info.name + '|' + info.sub;
+      if (L.key !== k) {
+        L.el.innerHTML = `<b>${info.name}</b><i>${info.sub}</i>`;
+        L.key = k; L.w = L.el.offsetWidth; L.h = L.el.offsetHeight;
+        L.dot.setAttribute('fill', info.color);
+      }
+      return L;
+    }
+    const tmpV = new THREE.Vector3();
+    function anchorOf(id, out) {
+      if (st.scene === 'sm') return detail.anchor(id, out);
+      if (id.startsWith('grp:')) { const g = groupOf(id); return g ? out.copy(g.anchor) : null; }
+      const a = station.anchors[id];
+      return a ? out.copy(a) : null;
+    }
+    function labelsNow(t, E) {
+      const out = [];
+      if (st.scene === 'sm' && !st.playing && st.manualExplode != null) {
+        if (E >= 0.35) out.push(...cfg.detailLabelOrder);
+      } else {
+        for (const p of cfg.labelPlan) {
+          if (t < p.t0 || t >= p.t1) continue;
+          const ids = p.ids === 'groups' ? station.groups.map((g) => 'grp:' + g.key) : p.ids;
+          const s0 = p.start != null ? p.start : p.t0;
+          ids.forEach((id, i) => { if (!p.step || t >= s0 + i * p.step) out.push(id); });
+        }
+      }
+      if (st.sel && !out.includes(st.sel)) out.push(st.sel);
+      return out;
+    }
+    let prevShown = new Set();
+    let W = 1, H = 1;
+    function drawLabels(ids) {
+      const items = [];
+      for (const id of ids) {
+        if (!anchorOf(id, tmpV)) continue;
+        tmpV.project(camera);
+        if (tmpV.z > 1 || tmpV.z < -1) continue;
+        const sx = ((tmpV.x + 1) / 2) * W, sy = ((1 - tmpV.y) / 2) * H;
+        if (sx < -20 || sx > W + 20 || sy < -20 || sy > H + 20) continue;
+        items.push({ id, sx, sy, L: labelEl(id) });
+      }
+      items.sort((a, b) => a.sy - b.sy);
+      const placed = [];
+      const hit = (r) => placed.some((p) => r.x < p.x + p.w + 4 && r.x + r.w + 4 > p.x && r.y < p.y + p.h + 3 && r.y + r.h + 3 > p.y);
+      const shown = new Set();
+      const bottom = rec ? 16 : 70;
+      for (const it of items) {
+        const { L } = it, side = it.sx < W * 0.5 ? -1 : 1;
+        const r = { x: side < 0 ? it.sx - 28 - L.w : it.sx + 28, y: it.sy - 32 - L.h / 2, w: L.w, h: L.h };
+        r.x = Math.min(W - L.w - 6, Math.max(6, r.x));
+        const y0 = r.y;
+        for (let k = 1; k < 14 && hit(r); k++) r.y = y0 + (k % 2 ? -1 : 1) * Math.ceil(k / 2) * (L.h + 4);
+        r.y = Math.min(H - L.h - bottom, Math.max(6, r.y));
+        placed.push(r);
+        L.el.style.transform = `translate(${r.x}px,${r.y}px)`;
+        if (!prevShown.has(it.id)) L.since = st.t;
+        const op = rec ? U.clamp01((st.t - L.since) / 0.35) : 1;
+        L.el.style.opacity = String(op);
+        L.line.style.opacity = L.dot.style.opacity = String(op);
+        L.el.classList.toggle('sel', it.id === st.sel || (st.sel === cfg.groupPart && it.id.startsWith('grp:')));
+        const ex = side < 0 ? r.x + r.w : r.x, ey = r.y + r.h / 2;
+        L.line.setAttribute('x1', it.sx); L.line.setAttribute('y1', it.sy); L.line.setAttribute('x2', ex); L.line.setAttribute('y2', ey);
+        L.dot.setAttribute('cx', it.sx); L.dot.setAttribute('cy', it.sy);
+        L.line.style.display = L.dot.style.display = '';
+        shown.add(it.id);
+      }
+      for (const [id, L] of labels) if (!shown.has(id)) { L.el.style.opacity = '0'; L.line.style.display = L.dot.style.display = 'none'; }
+      if (st.playing && !rec) for (const id of shown) if (!prevShown.has(id) && BY[id]) flashRow(id);
+      prevShown = shown;
+    }
+
+    // 하이라이트 (선택 · 호버 · 회로 모드)
+    function applyGlow(list) {
+      const k = st.scene + JSON.stringify(list);
+      if (k === lastGlow) return;
+      lastGlow = k;
+      for (const p of detail.pieces) U.glow(p.obj, 0);
+      for (const id in station.parts) for (const o of station.parts[id]) U.glow(o, 0);
+      for (const [id, amt] of list) {
+        const [pid, role] = id.split(':');
+        if (st.scene === 'sm') detail.glow(pid, amt, role);
+        else if (station.parts[pid]) for (const o of station.parts[pid]) U.glow(o, amt);
+      }
+    }
+
+    function updateCaption(i, mode) {
+      const k = i + '|' + mode;
+      if (k === lastCap) return;
+      lastCap = k;
+      const c = CH[i];
+      $('capK').textContent = c.k; $('capT').textContent = c.title(d); $('capP').textContent = c.text(d, mode);
+      document.querySelectorAll('.levels button').forEach((b) => b.setAttribute('aria-selected', b.id === 'lv-' + c.lv));
+    }
+
+    function resize() {
+      W = view.clientWidth; H = view.clientHeight;
+      gl.setSize(W, H, false);
+      camera.aspect = W / Math.max(1, H);
+      camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(view);
+    resize();
+    rebuildStation();
+    rebuildDetail();
+    setScene('station');
+
+    // ================= 매 프레임 =================
+    const P = new THREE.Vector3(), Q = new THREE.Vector3();
+    let last = performance.now();
+    function frame(now) {
+      requestAnimationFrame(frame);
+      const dt = Math.min(0.1, (now - last) / 1000); last = now;
+      if (rec) return;
+      if (st.playing) { st.t += dt; if (st.t >= T_END) { st.t = T_END; setPlaying(false); } }
+      step(now, dt);
+    }
+    function step(now, dt) {
+      const t = st.t;
+      const sc = sceneAt(t);
+      if (sc !== st.scene) setScene(sc);
+
+      const E = st.manualExplode != null ? st.manualExplode : cfg.explodeAt(t);
+      detail.setExplode(E);
+      floor.position.y = detail.floorY() - 0.002;
+      if (document.activeElement !== explodeEl) explodeEl.value = Math.round(E * 100);
+
+      if (st.playing || st.forceCam) {
+        const keys = sc === 'sm' ? cfg.detailKeys : t < SWITCH[0] ? K.before : K.after;
+        camAt(keys, t, P, Q);
+        if (st.blend && st.playing) {
+          const u = U.smooth((now - st.blend.start) / st.blend.dur);
+          P.lerpVectors(st.blend.p, P, u); Q.lerpVectors(st.blend.q, Q, u);
+          if (u >= 1) st.blend = null;
+        }
+        camera.position.copy(P); controls.target.copy(Q);
+        st.forceCam = false;
+      }
+      if (st.pendingFocus) {
+        const f = st.pendingFocus; st.pendingFocus = null;
+        detail.root.updateMatrixWorld();
+        if (anchorOf(f.id, tmpV)) {
+          const dir = camera.position.clone().sub(controls.target).normalize();
+          st.tween = { p0: camera.position.clone(), q0: controls.target.clone(), q1: tmpV.clone(), p1: tmpV.clone().addScaledVector(dir, f.dist), start: now, dur: 900 };
+        }
+      }
+      if (st.tween) {
+        const w = st.tween, u = U.smooth((now - w.start) / w.dur);
+        camera.position.lerpVectors(w.p0, w.p1, u); controls.target.lerpVectors(w.q0, w.q1, u);
+        if (u >= 1) st.tween = null;
+      }
+      controls.update();
+
+      if (hallAt) {
+        const op = st.xray != null ? (st.xray ? 0.1 : 1) : hallAt(t);
+        M.hall.opacity = op; M.hall.depthWrite = op > 0.95;
+        xrayEl.setAttribute('aria-pressed', op < 0.5);
+      }
+      const gb = station.glowBox;
+      if (gb) {
+        const ga = cfg.focusGlow ? cfg.focusGlow(t, now) : 0;
+        gb.visible = ga > 0.01 && sc === 'station'; gb.material.opacity = ga;
+      }
+      let fa = 0;
+      for (const s of SWITCH) fa = Math.max(fa, 1 - Math.abs(t - s) / 0.45);
+      $('fade').style.opacity = Math.max(0, fa).toFixed(3);
+
+      // 회로 인셋 · 스위칭 모드
+      const i = chAt(t);
+      const [o0, o1] = cfg.opWindow;
+      const inOp = t >= o0 && t < o1;
+      const mode = st.playing ? cfg.modeAt(t) : st.schemMode || cfg.modeAt(t);
+      const schemOn = sc === 'sm' && (inOp || !st.playing);
+      schemEl.hidden = !schemOn;
+      if (schemOn) {
+        if (mode !== lastMode) {
+          lastMode = mode;
+          pathEls.forEach((el) => (el.style.display = el.dataset.path === mode ? '' : 'none'));
+          modeBtns.forEach((b) => b.setAttribute('aria-pressed', b.dataset.mode === mode));
+          $('schemOut').innerHTML = cfg.modes[mode].out(d);
+        }
+        if (rec) pathEls.forEach((el) => (el.style.strokeDashoffset = (-((t / 0.9) * 13) % 13).toFixed(2)));
+      }
+      updateCaption(i, CH[i].usesMode ? mode : '');
+
+      const g = [];
+      if (st.sel) g.push([st.sel, 0.55]);
+      if (st.hover && st.hover !== st.sel) g.push([st.hover, 0.35]);
+      if (sc === 'sm' && ((st.playing && t >= cfg.opGlowFrom && t < o1) || (!st.playing && st.schemMode))) g.push(...cfg.modes[mode].glow);
+      applyGlow(g);
+      if (cfg.onStep) cfg.onStep({ t, now, dt, scene: sc, station, detail, E, d });
+
+      segs.forEach((s, k) => {
+        const c = CH[k];
+        s.firstChild.style.width = (U.clamp01((t - c.t0) / (c.t1 - c.t0)) * 100).toFixed(2) + '%';
+        s.classList.toggle('on', k === i);
+      });
+      const cs = segs[i], cc = CH[i];
+      ph.style.left = (cs.offsetLeft + U.clamp01((t - cc.t0) / (cc.t1 - cc.t0)) * cs.offsetWidth - 1).toFixed(1) + 'px';
+      const mm = (x) => `${String(Math.floor(x / 60)).padStart(2, '0')}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+      $('tc').textContent = `${mm(t)} / ${mm(T_END)}`;
+      track.setAttribute('aria-valuenow', Math.round(t));
+
+      gl.render(sc === 'sm' ? sM : sS, camera);
+      const ids = labelsNow(t, E);
+      drawLabels(ids);
+      if (rec) recPanel(ids, t, dt);
+    }
+
+    // 녹화 모드: 라벨이 붙은 부품 행을 강조하고 표를 그 행으로 스크롤
+    function recPanel(ids, t, dt) {
+      const lit = [...new Set(ids.map((id) => (id.startsWith('grp:') ? cfg.groupPart : id)).filter((id) => BY[id]))];
+      for (const id in rec.since) if (!lit.includes(id)) delete rec.since[id];
+      for (const id of lit) if (!(id in rec.since)) rec.since[id] = t;
+      const fresh = lit.filter((id) => t - rec.since[id] < 1.6);
+      const k = lit.join() + '|' + fresh.join();
+      if (k !== rec.key) {
+        rec.key = k;
+        bomEl.querySelectorAll('tr.it').forEach((r) => {
+          const id = r.dataset.id;
+          r.classList.toggle('lit', lit.includes(id) && !fresh.includes(id));
+          r.classList.toggle('now', fresh.includes(id));
+        });
+      }
+      const pane = bomEl.parentElement;
+      const rows = (fresh.length ? fresh : lit).map(rowOf).filter(Boolean);
+      if (rows.length) {
+        const base = pane.getBoundingClientRect().top - pane.scrollTop, head = 40;
+        const top = Math.min(...rows.map((r) => r.getBoundingClientRect().top - base));
+        const bot = Math.max(...rows.map((r) => r.getBoundingClientRect().bottom - base));
+        const y = bot - top < pane.clientHeight - head ? (top + bot) / 2 - (pane.clientHeight + head) / 2 : top - head;
+        rec.target = Math.max(0, Math.min(pane.scrollHeight - pane.clientHeight, y));
+      }
+      if (rec.first) { rec.scroll = rec.target; rec.first = false; }
+      rec.scroll += (rec.target - rec.scroll) * (1 - Math.exp(-dt * 4));
+      pane.scrollTop = rec.scroll;
+    }
+    function gpuName() {
+      try {
+        const c = gl.getContext(), ext = c.getExtension('WEBGL_debug_renderer_info');
+        return ext ? c.getParameter(ext.UNMASKED_RENDERER_WEBGL) : c.getParameter(c.RENDERER);
+      } catch (e) { return 'unknown'; }
+    }
+    // tools/record_mp4.py가 쓰는 녹화 API
+    window.ANATOMY_REC = {
+      duration: T_END,
+      async start(layout) {
+        rec = { since: {}, key: '', scroll: 0, target: 0, first: true, lastT: null };
+        document.body.classList.add('rec', layout === 'full' ? 'rec-full' : 'rec-split');
+        setTab('bom'); select(null);
+        Object.assign(st, { hover: null, blend: null, tween: null, pendingFocus: null, manualExplode: null, xray: null, schemMode: null, playing: true });
+        if (document.fonts) await document.fonts.ready;
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        resize();
+        labels.forEach((L) => (L.key = ''));
+        prevShown = new Set();
+        return { width: W, height: H, gpu: gpuName() };
+      },
+      render(t) {
+        const dt = rec.lastT == null ? 0 : Math.max(0, t - rec.lastT);
+        rec.lastT = t;
+        st.t = Math.min(T_END, Math.max(0, t)); st.playing = true; st.forceCam = true;
+        step(st.t * 1000, dt);
+        return st.t;
+      },
+    };
+    if (still) seek(24);
+    setPlaying(!reduceMotion && !still, true);
+    if (document.fonts) document.fonts.ready.then(() => labels.forEach((L) => (L.key = '')));
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+<script>
+/* js/wind-design.js */
+// 해상풍력 설계 기준 → 파생값 → 부품 리스트. 중속 기어박스 + 영구자석 발전기 + 3.3 kV 풀 컨버터
+(function () {
+  const W = (window.WIND = {});
+
+  W.CATS = {
+    mech:   { name: '기계·구동계', color: '#8b6f47' },
+    semi:   { name: '전력반도체', color: '#5b6f84' },
+    pas:    { name: '수동소자', color: '#3d7a73' },
+    prot:   { name: '보호·개폐', color: '#b5452e' },
+    ctrl:   { name: '제어·통신', color: '#3a8445' },
+    cool:   { name: '냉각', color: '#2f73b7' },
+    cond:   { name: '도체·케이블', color: '#b8703a' },
+    struct: { name: '구조·기초', color: '#98a3ad' },
+    mag:    { name: '발전기·변압기·리액터', color: '#77739a' },
+  };
+
+  W.INPUTS = [
+    { k: 'P', label: '단지 용량', unit: 'MW', min: 50, max: 2000, step: 10 },
+    { k: 'Pw', label: '터빈 정격', unit: 'MW', min: 3, max: 20, step: 0.5 },
+    { k: 'D', label: '로터 직경', unit: 'm', min: 100, max: 280, step: 2 },
+    { k: 'depth', label: '수심', unit: 'm', min: 10, max: 80, step: 1 },
+    { k: 'cf', label: '이용률', unit: '%', min: 15, max: 55, step: 1 },
+    { k: 'dist', label: '이안 거리', unit: 'km', min: 5, max: 100, step: 1 },
+  ];
+  W.DEFAULTS = { P: 400, Pw: 10, D: 200, depth: 30, cf: 35, dist: 30 };
+  W.FIXED = {
+    rho: 1.225, cp: 0.45, eta: 0.94, tip: 90, genRpm: 450, air: 30, tpTop: 20, arrKV: 66, expKV: 154, convKV: 3.3,
+    strMW: 80, threadMVA: 6, expMW: 250, qPerKm: 1.8, jacketDepth: 45,
+  };
+
+  const fmt = (W.fmt = (v, dec = 0) =>
+    v == null || !isFinite(v) ? '—'
+      : Number(v).toLocaleString('ko-KR', { minimumFractionDigits: dec, maximumFractionDigits: dec }));
+
+  W.clampInputs = function (inp) {
+    const out = {};
+    for (const f of W.INPUTS) {
+      let v = Number(inp[f.k]);
+      if (!isFinite(v)) v = W.DEFAULTS[f.k];
+      out[f.k] = Math.min(f.max, Math.max(f.min, v));
+    }
+    return out;
+  };
+
+  W.compute = function (inp) {
+    const x = W.clampInputs(inp), F = W.FIXED;
+    const n = Math.ceil(x.P / x.Pw - 1e-9);
+    const tps = Math.max(1, Math.floor(F.strMW / x.Pw + 1e-9)), nStr = Math.ceil(n / tps);
+    const A = (Math.PI * x.D * x.D) / 4;
+    const vr = Math.cbrt((2 * x.Pw * 1e6) / (F.rho * A * F.cp * F.eta));
+    const rpm = (F.tip * 60) / (Math.PI * x.D);
+    const torque = (x.Pw * 1e6) / ((rpm * 2 * Math.PI) / 60) / 1e6;          // MN·m
+    const ratio = Math.max(1, Math.round(F.genRpm / rpm));
+    const Hhub = x.D / 2 + F.air;
+    const towerH = Hhub - 3.8 - F.tpTop; // 3.8 m = 요 베어링 윗면 → 구동축 (wind-nacelle.js의 AXIS_H)
+    const jacket = x.depth > F.jacketDepth;
+    const Dmp = Math.min(12, 5 + 0.4 * x.Pw);
+    const Sconv = x.Pw / 0.9, threads = Math.max(1, Math.ceil(Sconv / F.threadMVA - 1e-9));
+    const nExp = Math.max(1, Math.ceil(x.P / F.expMW - 1e-9));
+    const Qc = F.qPerKm * x.dist * nExp;
+    return {
+      in: x, n, tps, nStr, A, sp: (x.Pw * 1e6) / A, vr, rpm, torque, ratio, genRpm: rpm * ratio, Hhub, towerH,
+      sections: Math.ceil(towerH / 30 - 1e-9), blade: x.D / 2 - 3, jacket, Dmp, Lmp: x.depth + 15 + 3.5 * Dmp,
+      Sconv, threads, Sth: Sconv / threads, igbt: 24 * threads, Iconv: (Sconv * 1e3) / (Math.sqrt(3) * F.convKV) / threads,
+      Str: 1.1 * x.Pw, nyaw: Math.round(8 + 0.4 * x.Pw), seg: 7 * x.D, nExp, Soss: Math.ceil((x.P * 1.1) / nExp / 10 - 1e-9) * 10,
+      Qc, Qsr: Qc / (2 * nExp), Qst: 0.3 * x.P, aep: x.P * 8.76 * (x.cf / 100),
+    };
+  };
+
+  const fdnTxt = (d) => (d.jacket ? '재킷 (4다리)' : '모노파일');
+
+  // lv: sm = 터빈 1기당, arm = 어레이 스트링당, st = 단지 전체
+  W.BOM = [
+    { id: 'cover', lv: 'sm', cat: 'struct', name: '나셀 커버', q: () => 1,
+      spec: () => 'GFRP 외피 · 헬기 호이스트 플랫폼', short: () => 'GFRP 외피',
+      desc: '나셀 설비를 바닷바람과 염분으로부터 보호하는 복합재 외피입니다. 내부는 양압과 제습으로 염분이 들어오지 못하게 합니다.' },
+    { id: 'blade', lv: 'sm', cat: 'mech', name: '블레이드', q: () => 3,
+      spec: (d) => `길이 ${fmt(d.blade)} m · 유리·탄소섬유 복합재`, short: (d) => `${fmt(d.blade)} m × 3`,
+      desc: '바람의 운동 에너지를 회전력으로 바꿉니다. 끝단 속도를 약 90 m/s로 제한해 소음과 앞전 침식을 줄이므로, 로터가 클수록 천천히 돕니다.' },
+    { id: 'hub', lv: 'sm', cat: 'mech', name: '허브 · 스피너', q: () => 1,
+      spec: () => '구상흑연주철 · 블레이드 3개 고정', short: () => '주철 허브',
+      desc: '블레이드 세 개를 잡아 메인 샤프트에 회전력을 넘깁니다. 안에 피치 베어링과 구동기가 들어 있습니다.' },
+    { id: 'pitchb', lv: 'sm', cat: 'mech', name: '피치 베어링', q: () => 3,
+      spec: () => '블레이드 뿌리 · 대구경 선회 베어링', short: () => '× 3',
+      desc: '블레이드를 제 축으로 비틀 수 있게 받치는 대형 베어링입니다. 날개 하중과 굽힘 모멘트를 모두 견딥니다.' },
+    { id: 'pitchd', lv: 'sm', cat: 'mech', name: '피치 구동기', q: () => 6,
+      spec: () => '전동식 · 블레이드당 2 · 비상 배터리', short: () => '× 6 · 전동',
+      desc: '정격 풍속 위에서 블레이드 각도를 바꿔 출력을 묶어 두고, 비상시에는 블레이드를 바람과 나란히 세워(페더링) 로터를 멈춥니다.' },
+    { id: 'shaft', lv: 'sm', cat: 'mech', name: '메인 샤프트', q: () => 1,
+      spec: (d) => `단조강 · 토크 ${fmt(d.torque, 1)} MN·m`, short: (d) => `${fmt(d.torque, 1)} MN·m`,
+      desc: '허브의 느린 회전을 기어박스로 전달합니다. 토크는 크고 회전은 느려서(정격에서 분당 9회 안팎) 매우 굵습니다.' },
+    { id: 'mbear', lv: 'sm', cat: 'mech', name: '메인 베어링', q: () => 2,
+      spec: () => '테이퍼 롤러 · 앞·뒤 2개', short: () => '× 2',
+      desc: '로터의 무게와 바람의 추력을 받아 베드플레이트로 넘깁니다. 기어박스에는 토크만 들어가도록 굽힘 하중을 막아 줍니다.' },
+    { id: 'brake', lv: 'sm', cat: 'mech', name: '로터 브레이크 · 로크', q: () => 1,
+      spec: () => '디스크 + 유압 캘리퍼 · 정비용 로크 핀', short: () => '정비 시 고정',
+      desc: '정비할 때 로터를 멈춰 고정합니다. 평소 제동은 피치로 합니다.' },
+    { id: 'gbx', lv: 'sm', cat: 'mech', name: '기어박스 (중속)', q: () => 1,
+      spec: (d) => `유성 2단 · i ≈ ${fmt(d.ratio)} · ${fmt(d.torque, 1)} MN·m`, short: (d) => `${fmt(d.ratio)} : 1`,
+      desc: '느린 로터 회전을 발전기에 맞는 중속으로 올립니다. 고속 3단 대신 2단으로 줄여 고장이 잦은 고속단을 없앤 방식입니다.' },
+    { id: 'gen', lv: 'sm', cat: 'mag', name: '영구자석 발전기 (PMSG)', q: () => 1,
+      spec: (d) => `${fmt(d.in.Pw, 1)} MW · ${fmt(d.genRpm)} rpm · 가변 주파수`, short: (d) => `${fmt(d.genRpm)} rpm`,
+      desc: '회전을 전기로 바꿉니다. 회전수가 바람에 따라 바뀌어 주파수도 바뀌므로, 풀 컨버터가 60 Hz로 맞춰 줍니다.' },
+    { id: 'conv', lv: 'sm', cat: 'semi', name: '풀 컨버터 (MSC + GSC)', q: (d) => d.threads,
+      spec: (d) => `${W.FIXED.convKV} kV · 3레벨 NPC · 병렬 ${d.threads} × ${fmt(d.Sth, 1)} MVA`, short: (d) => `${d.threads} × ${fmt(d.Sth, 1)} MVA`,
+      desc: '발전기측 컨버터(MSC)가 가변 주파수 교류를 직류로, 계통측 컨버터(GSC)가 직류를 60 Hz로 바꿉니다. 발전기와 계통을 완전히 떼어 놓아 각자 따로 제어할 수 있습니다.' },
+    { id: 'igbt', lv: 'sm', cat: 'semi', name: 'IGBT (프레스팩)', q: (d) => d.igbt,
+      spec: (d) => `4.5 kV · 컨버터당 24개 · ${fmt(d.Iconv)} A rms`, short: (d) => `${d.igbt}개`,
+      desc: 'MSC와 GSC 각각 3상 × 4개(3레벨)의 스위치입니다. 프레스팩은 고장 나도 단락 상태로 남아 정비 전까지 안전하게 버팁니다.' },
+    { id: 'chop', lv: 'sm', cat: 'prot', name: 'DC 초퍼 (제동 저항)', q: (d) => d.threads,
+      spec: () => '계통 고장 시 잉여 전력 소모', short: () => 'FRT용',
+      desc: '계통 전압이 순간적으로 떨어져 전력을 내보내지 못할 때, 발전기에서 들어오는 전력을 저항에서 태워 DC 링크 과전압을 막습니다. 고장 중에도 터빈이 계통에 붙어 있게(FRT) 해 줍니다.' },
+    { id: 'ctr', lv: 'sm', cat: 'mag', name: '나셀 변압기', q: () => 1,
+      spec: (d) => `${fmt(d.Str, 1)} MVA · ${W.FIXED.convKV}/${W.FIXED.arrKV} kV · 에스테르유`, short: (d) => `${fmt(d.Str, 1)} MVA`,
+      desc: '컨버터 출력 3.3 kV를 어레이 66 kV로 올립니다. 나셀 뒤쪽에 두어 타워 안의 저압 대전류 케이블을 없앴습니다.' },
+    { id: 'cool', lv: 'sm', cat: 'cool', name: '외부 라디에이터', q: () => 1,
+      spec: () => '나셀 상부 · 수냉 회로 방열', short: () => '수냉 방열',
+      desc: '기어박스, 발전기, 컨버터, 변압기의 열을 모아 나셀 위 라디에이터에서 바람으로 식힙니다.' },
+    { id: 'ctrl', lv: 'sm', cat: 'ctrl', name: '터빈 제어기', q: () => 1,
+      spec: () => '피치·토크·요 제어 · 안전 체인', short: () => '피치 · 토크 · 요',
+      desc: '풍속과 회전수를 보고 피치와 발전기 토크를 정하고, 바람 방향에 맞춰 나셀을 돌립니다. 과속이나 진동이 생기면 안전 체인이 로터를 세웁니다.' },
+    { id: 'crane', lv: 'sm', cat: 'struct', name: '서비스 크레인', q: () => 1,
+      spec: () => '나셀 내부 · 부품 교체용', short: () => '정비용',
+      desc: '나셀 안에서 부품을 들어 옮기거나 선박으로 내릴 때 씁니다.' },
+    { id: 'met', lv: 'sm', cat: 'ctrl', name: '풍향·풍속계', q: () => 2,
+      spec: () => '초음파식 · 나셀 상부', short: () => '초음파식',
+      desc: '요 제어와 출력 곡선 확인에 쓰는 바람 측정기입니다.' },
+    { id: 'yawb', lv: 'sm', cat: 'mech', name: '요 베어링', q: () => 1,
+      spec: () => '타워 상단 · 대구경 선회 베어링', short: () => '타워 상단',
+      desc: '나셀 전체를 타워 위에서 돌릴 수 있게 받칩니다.' },
+    { id: 'yawd', lv: 'sm', cat: 'mech', name: '요 구동기', q: (d) => d.nyaw,
+      spec: () => '전동기 + 유성 감속기', short: (d) => `× ${d.nyaw}`,
+      desc: '풍향이 바뀌면 나셀을 돌려 로터가 바람을 정면으로 받게 합니다.' },
+    { id: 'bed', lv: 'sm', cat: 'struct', name: '베드플레이트', q: () => 1,
+      spec: () => '주철 앞부 + 강재 뒤 프레임', short: () => '나셀 뼈대',
+      desc: '로터 하중을 타워로 넘기고 나셀의 모든 설비를 올려놓는 뼈대입니다.' },
+    { id: 'tower', lv: 'sm', cat: 'struct', name: '타워', q: () => 1,
+      spec: (d) => `${fmt(d.towerH)} m · ${d.sections}섹션 · 강관`, short: (d) => `${fmt(d.towerH)} m`,
+      desc: '나셀과 로터를 허브 높이까지 올립니다. 안에 전력 케이블, 승강기, 사다리가 있습니다.' },
+    { id: 'swg', lv: 'sm', cat: 'prot', name: `${W.FIXED.arrKV} kV 스위치기어`, q: () => 1,
+      spec: () => '타워 하부 · 인입 · 인출 · 터빈 차단기', short: () => 'GIS',
+      desc: '어레이 케이블이 터빈에 들어오고 나가는 곳입니다. 터빈 하나를 떼어 내도 스트링의 나머지는 계속 돌게 합니다.' },
+    { id: 'tp', lv: 'sm', cat: 'struct', name: '트랜지션 피스', q: () => 1,
+      spec: () => '작업 플랫폼 · 보트 랜딩 · J-튜브', short: () => '작업 플랫폼',
+      desc: '기초와 타워를 잇는 부분입니다. 정비선이 닿는 보트 랜딩과 케이블이 올라오는 J-튜브가 붙어 있습니다.' },
+    { id: 'fdn', lv: 'sm', cat: 'struct', name: '해상 기초', q: () => 1,
+      spec: (d) => `${fdnTxt(d)} · 수심 ${fmt(d.in.depth)} m${d.jacket ? '' : ` · 직경 ${fmt(d.Dmp, 1)} m · 길이 ${fmt(d.Lmp)} m`}`, short: (d) => fdnTxt(d),
+      desc: '해저에 박아 터빈을 세웁니다. 얕은 바다에서는 큰 강관 하나(모노파일), 깊어지면 네 다리 격자 구조(재킷)를 씁니다.' },
+
+    { id: 'arrcab', lv: 'arm', cat: 'cond', name: `어레이 케이블 (${W.FIXED.arrKV} kV)`, q: (d) => d.tps,
+      spec: (d) => `3심 XLPE · 구간 ≈ ${fmt(d.seg)} m`, short: (d) => `${d.tps} 구간`,
+      desc: '터빈들을 줄줄이 이어 해상변전소까지 가는 해저 케이블입니다. 케이블 하나가 나를 수 있는 전력이 스트링당 터빈 수를 정합니다.' },
+    { id: 'cps', lv: 'arm', cat: 'struct', name: '케이블 보호 시스템', q: (d) => 2 * d.tps,
+      spec: () => '기초 진입부 굽힘 제한', short: () => '구간 양끝',
+      desc: '케이블이 해저에서 J-튜브로 들어가는 곳에서 과도하게 휘거나 쓸리지 않게 감쌉니다.' },
+    { id: 'strcb', lv: 'arm', cat: 'prot', name: '스트링 차단기', q: () => 1,
+      spec: () => `${W.FIXED.arrKV} kV · 해상변전소 GIS`, short: () => '해상변전소',
+      desc: '스트링 하나를 해상변전소에서 끊습니다.' },
+
+    { id: 'oss', lv: 'st', cat: 'struct', name: '해상변전소 (OSS)', q: () => 1,
+      spec: () => '탑사이드 + 재킷 · 헬리데크', short: () => '탑사이드 + 재킷',
+      desc: '어레이 케이블을 모아 전압을 올려 육지로 보냅니다. 변압기, 개폐장치, 보조 발전기, 거주 설비가 탑사이드에 있습니다.' },
+    { id: 'osst', lv: 'st', cat: 'mag', name: '해상변전소 주변압기', q: (d) => d.nExp,
+      spec: (d) => `${fmt(d.Soss)} MVA · ${W.FIXED.arrKV}/${W.FIXED.expKV} kV`, short: (d) => `${d.nExp} × ${fmt(d.Soss)} MVA`,
+      desc: '66 kV를 송전 전압으로 올립니다. 한 대가 멈춰도 절반 이상을 보낼 수 있게 나눠 둡니다.' },
+    { id: 'shr', lv: 'st', cat: 'mag', name: '분로 리액터', q: (d) => 2 * d.nExp,
+      spec: (d) => `≈ ${fmt(d.Qsr)} Mvar · 해상 · 육상 양끝`, short: (d) => `${fmt(d.Qsr)} Mvar`,
+      desc: '긴 교류 해저 케이블은 거대한 커패시터처럼 충전 전류를 흘립니다. 케이블 양끝의 리액터가 이 무효전력을 상쇄해 송전 용량을 되찾습니다.' },
+    { id: 'expcab', lv: 'st', cat: 'cond', name: `해저 송전 케이블 (${W.FIXED.expKV} kV)`, q: (d) => d.nExp,
+      spec: (d) => `3심 XLPE · ${fmt(d.in.dist)} km`, short: (d) => `${d.nExp}회선 · ${fmt(d.in.dist)} km`,
+      desc: '해상변전소에서 육상 변전소까지 가는 송전 케이블입니다. 거리가 더 길어지면 충전 전류가 없는 HVDC가 유리해집니다.' },
+    { id: 'onsub', lv: 'st', cat: 'prot', name: '육상 변전소', q: () => 1,
+      spec: () => `${W.FIXED.expKV} kV GIS · 계량 · 보호`, short: () => '계통 연계점',
+      desc: '해저 케이블이 육지에 닿아 계통에 연결되는 곳입니다.' },
+    { id: 'stat', lv: 'st', cat: 'semi', name: 'STATCOM (무효전력 보상)', q: () => 1,
+      spec: (d) => `±${fmt(d.Qst)} Mvar · 계통 연계 기준 대응`, short: (d) => `±${fmt(d.Qst)} Mvar`,
+      desc: '연계점 전압을 붙잡고 계통 고장 때 무효전류를 넣습니다. 같은 시리즈의 STATCOM 해부도를 참고하세요.' },
+    { id: 'scada', lv: 'st', cat: 'ctrl', name: 'SCADA · 단지 제어기', q: () => 1,
+      spec: () => '출력 제한 · 전압 제어 · 후류 최적화', short: () => '단지 제어',
+      desc: '계통 지령에 맞춰 단지 전체 출력과 전압을 조절하고, 앞 터빈의 후류가 뒤 터빈을 덜 가리도록 운전을 조율합니다.' },
+    { id: 'lidar', lv: 'st', cat: 'ctrl', name: '해상 기상 관측 (LiDAR)', q: () => 1,
+      spec: () => '부유식 또는 고정식 · 풍황 측정', short: () => 'LiDAR',
+      desc: '허브 높이의 바람을 레이저로 재서 발전량 예측과 성능 검증에 씁니다.' },
+  ];
+  W.BOM_BY_ID = Object.fromEntries(W.BOM.map((b) => [b.id, b]));
+  W.LEVELS = { sm: '풍력 터빈 (1기)', arm: '어레이 스트링', st: '해상풍력 단지 전체' };
+
+  W.qty = function (b, d) {
+    const q = b.q(d);
+    if (b.lv === 'sm') return { sm: q, arm: q * d.tps, st: q * d.n };
+    if (b.lv === 'arm') return { sm: null, arm: q, st: q * d.nStr };
+    return { sm: null, arm: null, st: q };
+  };
+
+  W.derivedRows = function (d) {
+    return [
+      ['터빈 수', `${fmt(d.n)}기 (스트링 ${d.nStr} × 최대 ${d.tps})`],
+      ['로터 면적 · 비출력', `${fmt(d.A)} m² · ${fmt(d.sp)} W/m²`],
+      ['정격 풍속 (C_p 0.45)', `≈ ${fmt(d.vr, 1)} m/s`],
+      ['정격 회전수 (끝단 90 m/s)', `${fmt(d.rpm, 1)} rpm`],
+      ['로터 토크', `${fmt(d.torque, 1)} MN·m`],
+      ['기어비 → 발전기 속도', `${fmt(d.ratio)} : 1 → ${fmt(d.genRpm)} rpm`],
+      ['허브 높이', `${fmt(d.Hhub)} m (수면 위)`],
+      ['기초', d.jacket ? `재킷 · 수심 ${fmt(d.in.depth)} m` : `모노파일 · 직경 ${fmt(d.Dmp, 1)} m · 길이 ${fmt(d.Lmp)} m`],
+      ['풀 컨버터', `${d.threads} × ${fmt(d.Sth, 1)} MVA · ${W.FIXED.convKV} kV · ${fmt(d.Iconv)} A`],
+      ['나셀 변압기', `${fmt(d.Str, 1)} MVA · ${W.FIXED.convKV}/${W.FIXED.arrKV} kV`],
+      ['어레이 케이블', `구간 ${fmt(d.seg)} m · 스트링당 ${d.tps} 구간`],
+      ['송전 케이블 충전 용량', `≈ ${fmt(d.Qc)} Mvar (${fmt(d.in.dist)} km × ${d.nExp}회선)`, d.in.dist > 80],
+      ['연간 발전량', `≈ ${fmt(d.aep)} GWh (이용률 ${fmt(d.in.cf)} %)`],
+    ];
+  };
+
+  W.ASSUME = [
+    '중속 기어박스(유성 2단) + 영구자석 발전기 + 3.3 kV 3레벨 풀 컨버터 (스레드당 최대 6 MVA)',
+    '정격 풍속: P = ½ρAC<sub>p</sub>ηv³ (ρ 1.225, C<sub>p</sub> 0.45, η 0.94). 끝단 속도 90 m/s, 발전기 약 450 rpm',
+    '허브 높이 = 로터 반지름 + 30 m (날개 끝 여유), 트랜지션 피스 상단 +20 m',
+    `수심 ${W.FIXED.jacketDepth} m 이하 모노파일(직경 5 + 0.4 × 정격 MW), 초과 시 재킷`,
+    `어레이 ${W.FIXED.arrKV} kV, 스트링 최대 ${W.FIXED.strMW} MW, 터빈 간격 7D × 5D`,
+    `송전 ${W.FIXED.expKV} kV 3심 XLPE, 회선당 ${W.FIXED.expMW} MW, 충전 용량 ${W.FIXED.qPerKm} Mvar/km·회선 (양끝 리액터로 나눠 보상)`,
+    'STATCOM ±0.3 P, 연간 발전량 = P × 8,760 h × 이용률',
+    '후류 손실, 가용률, 케이블 길이 최적화, 계통 연계 기준은 반영하지 않은 개략 산정',
+  ];
+})();
+</script>
+<script>
+/* js/wind-nacelle.js */
+// 풍력 터빈 나셀 상세 모델 (단위: m). x = 로터 축(+x가 로터 쪽), y = 위, 타워 중심 x = z = 0, y = 0이 요 베어링 윗면
+// 로터 → 메인 샤프트 → 중속 기어박스 → 영구자석 발전기 → 풀 컨버터 → 나셀 변압기
+(function () {
+  const W = window.WIND, U = KIT.u;
+  W.AXIS_H = 3.8; // 구동축 높이 (요 베어링 윗면 기준)
+  W.NACELLE_LABEL_ORDER = ['cover', 'hub', 'blade', 'pitchb', 'pitchd', 'shaft', 'mbear', 'gbx', 'gen', 'conv', 'igbt', 'chop', 'ctr', 'cool', 'ctrl', 'yawb', 'yawd', 'bed', 'tower'];
+
+  W.buildNacelle = function (M, d) {
+    const threads = Math.min(3, Math.max(1, d.threads)), nyaw = Math.min(20, Math.max(4, d.nyaw));
+    const A = KIT.assembly(M);
+    const G = () => new THREE.Group();
+    const V = (x, y, z) => new THREE.Vector3(x, y, z);
+    const AX = W.AXIS_H, HUB = V(8.6, AX, 0), UP = V(0, 1, 0), ZA = V(0, 0, 1);
+    const HUB_OFF = [11, 1.5, 0];
+    let g;
+
+    // 타워 상단 · 요 베어링 · 요 구동기
+    g = G(); g.add(U.cyl(2.6, 2.8, 6, M.bldg, 0, -3, 0, null, 40));
+    A.piece('tower', g, [0, -9, 0], 0.4);
+    g = G();
+    const ring = U.mesh(new THREE.TorusGeometry(2.55, 0.3, 12, 56), M.al, 0, 0.3, 0); ring.rotation.x = Math.PI / 2; g.add(ring);
+    A.piece('yawb', g, [0, -6, 0], 0.36);
+    for (let i = 0; i < nyaw; i++) {
+      const a = (i / nyaw) * Math.PI * 2, cx = Math.cos(a) * 2.05, cz = Math.sin(a) * 2.05;
+      g = G();
+      g.add(U.cyl(0.24, 0.24, 1.1, M.alDark, cx, 1.25, cz, null, 12));
+      g.add(U.cyl(0.17, 0.17, 0.3, M.al, cx, 0.55, cz, null, 10));
+      A.piece('yawd', g, [Math.cos(a) * 2.4, -3.4, Math.sin(a) * 2.4], 0.33, { labelHere: i === 0 });
+    }
+
+    // 베드플레이트 (분해 기준)
+    g = G();
+    g.add(U.box(5.6, 1.4, 4.2, M.alDark, 1.0, 1.2, 0));
+    for (const s of [-1, 1]) g.add(U.box(12.5, 0.6, 0.5, M.alDark, -7.8, 1.1, s * 1.9));
+    for (const x of [-3.5, -8.5, -13.5]) g.add(U.box(0.5, 0.6, 4.3, M.alDark, x, 1.1, 0));
+    g.add(U.box(12, 0.08, 7.6, M.al, -8, 1.44, 0));
+    A.piece('bed', g, [0, 0, 0], 0);
+
+    // 메인 베어링 2 · 메인 샤프트 · 브레이크
+    for (const x of [3.4, 0.6]) {
+      g = G();
+      g.add(U.box(1.2, 3.0, 3.0, M.alDark, x, 3.4, 0));
+      const r = U.mesh(new THREE.TorusGeometry(1.2, 0.22, 10, 36), M.al, x + 0.62, AX, 0); r.rotation.y = Math.PI / 2; g.add(r);
+      A.piece('mbear', g, [x > 2 ? 4.5 : 2.5, 3.4, 0], 0.2, { labelHere: x > 2 });
+    }
+    g = G();
+    g.add(U.cyl(0.95, 0.95, 7.4, M.al, 2.9, AX, 0, 'x', 32));
+    g.add(U.cyl(1.7, 1.7, 0.4, M.al, 6.6, AX, 0, 'x', 40));
+    A.piece('shaft', g, [6.5, 5.8, 0], 0.15);
+    g = G();
+    g.add(U.cyl(1.2, 1.2, 0.12, M.al, -1.05, AX, 0, 'x', 40));
+    for (const s of [-1, 1]) g.add(U.box(0.35, 0.5, 0.4, M.prot, -1.05, AX + s * 1.05, 0.35 * s));
+    A.piece('brake', g, [1.2, 8.8, 0], 0.22);
+
+    // 중속 기어박스 · 영구자석 발전기
+    g = G();
+    g.add(U.cyl(2.0, 1.8, 3.2, M.alDark, -2.9, AX, 0, 'x', 40));
+    g.add(U.cyl(1.4, 1.4, 0.5, M.al, -1.35, AX, 0, 'x', 32));
+    for (const s of [-1, 1]) g.add(U.box(0.7, 0.7, 2.2, M.alDark, -2.2, AX - 1.2, s * 2.3));
+    A.piece('gbx', g, [0, 5.4, 0], 0.25);
+    g = G();
+    g.add(U.cyl(2.3, 2.3, 2.6, M.mag, -5.9, AX, 0, 'x', 48));
+    for (let i = 0; i < 6; i++) g.add(U.cyl(2.36, 2.36, 0.08, M.alDark, -4.9 - i * 0.4, AX, 0, 'x', 48));
+    g.add(U.box(1.0, 0.6, 1.2, M.alDark, -5.9, AX + 2.55, 0));
+    A.piece('gen', g, [-3.2, 5.4, 0], 0.28);
+
+    // 풀 컨버터 (스레드마다 캐비닛 1) + IGBT 스택
+    const CZ = [-3.0, 3.0, -3.0], CXs = [-10.0, -10.0, -6.8];
+    for (let k = 0; k < threads; k++) {
+      const cx = CXs[k], cz = CZ[k], s = Math.sign(cz);
+      g = G();
+      g.add(U.box(3.4, 2.4, 1.1, M.bldg, cx, 2.68, cz));
+      g.add(U.box(0.012, 2.2, 0.012, M.alDark, cx, 2.68, cz + s * 0.556));
+      g.add(U.box(0.5, 0.3, 0.012, M.chip, cx - 0.9, 3.3, cz + s * 0.556));
+      A.piece('conv', g, [-1, 0.6, s * 4.5], 0.3 + k * 0.03, { labelHere: k === 0 });
+      for (const dx of [-0.8, 0.8]) {
+        g = G();
+        for (let j = 0; j < 6; j++) {
+          g.add(U.cyl(0.17, 0.17, 0.05, M.semi, cx + dx, 2.1 + j * 0.2, cz, null, 16));
+          g.add(U.box(0.42, 0.1, 0.42, M.al, cx + dx, 2.2 + j * 0.2, cz));
+        }
+        A.piece('igbt', g, [-1, 3.6, s * 8.2], 0.34 + k * 0.03, { labelHere: k === 0 && dx < 0 });
+      }
+    }
+    // DC 초퍼 (제동 저항) · 나셀 변압기
+    g = G();
+    g.add(U.box(1.6, 1.2, 1.4, M.prot, -10.0, 2.1, 0));
+    for (let i = 0; i < 5; i++) g.add(U.cyl(0.05, 0.05, 1.2, M.ceramic, -10.6 + i * 0.3, 2.9, 0, 'z', 8));
+    A.piece('chop', g, [-2.5, 5.8, 0], 0.32);
+    g = G();
+    g.add(U.box(2.2, 2.8, 2.8, M.mag, -12.9, 2.9, 0));
+    for (let i = 0; i < 5; i++) g.add(U.box(0.3, 2.2, 0.05, M.alDark, -14.15, 2.8, -1.0 + i * 0.5));
+    for (const dz of [-0.8, 0, 0.8]) g.add(U.cyl(0.08, 0.12, 0.5, M.porcelain, -12.6, 4.55, dz, null, 10));
+    A.piece('ctr', g, [-6.5, 0, 0], 0.3);
+
+    // 지붕 라디에이터 · 제어기 · 서비스 크레인 · 풍향풍속계
+    g = G();
+    g.add(U.box(3.6, 2.8, 0.4, M.al, -11.5, 10.6, 0));
+    for (let i = 0; i < 10; i++) g.add(U.box(0.05, 2.6, 0.6, M.alDark, -13.1 + i * 0.35, 10.6, 0));
+    for (const s of [-1, 1]) g.add(U.box(0.15, 1.4, 0.15, M.alDark, -11.5 + s * 1.6, 9.5, 0));
+    A.piece('cool', g, [-3, 6.5, 0], 0.2);
+    g = G();
+    g.add(U.box(1.1, 2.0, 0.6, M.bldg, -3.0, 2.5, -3.3));
+    g.add(U.box(0.8, 1.2, 0.012, M.ctrl, -3.0, 2.7, -2.99));
+    A.piece('ctrl', g, [0, 1.5, -5.5], 0.3);
+    g = G();
+    g.add(U.box(5.5, 0.35, 0.35, M.prot, -10.5, 8.3, 0));
+    g.add(U.box(0.6, 0.5, 0.6, M.alDark, -9.5, 7.85, 0));
+    A.piece('crane', g, [-2, 7.5, 0], 0.25);
+    g = G();
+    for (const s of [-1, 1]) {
+      g.add(U.cyl(0.05, 0.05, 2, M.al, -13.2, 10.0, s * 1.3, null, 8));
+      g.add(U.box(0.3, 0.15, 0.3, M.alDark, -13.2, 11.05, s * 1.3));
+    }
+    A.piece('met', g, [-4, 10, 0], 0.2);
+
+    // 허브 · 스피너 · 피치 베어링 · 피치 구동기 · 블레이드 뿌리
+    g = G();
+    g.add(U.mesh(new THREE.SphereGeometry(2.9, 32, 20), M.bldg, HUB.x, HUB.y, 0));
+    const cone = U.mesh(new THREE.ConeGeometry(3.1, 3.4, 32), M.bldg, HUB.x + 3.0, HUB.y, 0); cone.rotation.z = -Math.PI / 2; g.add(cone);
+    A.piece('hub', g, HUB_OFF, 0.05);
+    [0, 1, 2].forEach((k) => {
+      const a = (k * 2 * Math.PI) / 3, dir = V(0, Math.cos(a), Math.sin(a));
+      const off = (m) => [HUB_OFF[0], HUB_OFF[1] + dir.y * m, dir.z * m];
+      g = G();
+      const c = HUB.clone().addScaledVector(dir, 2.7);
+      const pb = U.mesh(new THREE.TorusGeometry(1.75, 0.22, 10, 40), M.al, c.x, c.y, c.z);
+      pb.quaternion.setFromUnitVectors(ZA, dir); g.add(pb);
+      A.piece('pitchb', g, off(3.5), 0.1, { labelHere: k === 0 });
+      for (const s of [-1, 1]) {
+        g = G();
+        const p = HUB.clone().addScaledVector(dir, 1.6).add(V(s * 1.0, 0, 0));
+        const mot = U.mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.9, 12), M.alDark, p.x, p.y, p.z);
+        mot.quaternion.setFromUnitVectors(UP, dir); g.add(mot);
+        const o = off(2.2); o[0] += s * 1.2;
+        A.piece('pitchd', g, o, 0.12, { labelHere: k === 0 && s > 0 });
+      }
+      g = G();
+      const b = HUB.clone().addScaledVector(dir, 2.9 + 3.6);
+      const root = U.mesh(new THREE.CylinderGeometry(1.45, 1.8, 7.2, 28), M.film, b.x, b.y, b.z);
+      root.quaternion.setFromUnitVectors(UP, dir); g.add(root);
+      A.piece('blade', g, off(7), 0.08, { labelHere: k === 0 });
+    });
+
+    // 나셀 커버: 분해되면 반투명해지며 벌어짐
+    const CX = -4.6, CL = 19.6, top = 9.0, bot = 1.48, midY = (top + bot) / 2, hgt = top - bot;
+    g = G(); g.add(U.box(CL, 0.3, 8.3, M.bldg, CX, top + 0.15, 0));
+    A.piece('cover', g, [0, 7, 0], 0, { ghost: 0.12, labelHere: true });
+    for (const s of [-1, 1]) { g = G(); g.add(U.box(CL, hgt, 0.25, M.bldg, CX, midY, s * 4.05)); A.piece('cover', g, [0, 0, s * 7], 0, { ghost: 0.12 }); }
+    g = G(); g.add(U.box(0.25, hgt, 8.3, M.bldg, CX - CL / 2, midY, 0)); A.piece('cover', g, [-7, 0, 0], 0, { ghost: 0.12 });
+    g = G(); g.add(U.box(0.25, hgt, 8.3, M.bldg, CX + CL / 2, midY, 0)); A.piece('cover', g, [2.5, 0, 0], 0, { ghost: 0.12 });
+
+    return A.finish('tower', -6);
+  };
+})();
+</script>
+<script>
+/* js/wind-farm.js */
+// 해상풍력 단지 (단위: m). x = 동(로터가 향하는 쪽), z = 남, y = 위(수면 0). 투어에서 확대할 터빈이 원점
+(function () {
+  const W = window.WIND, U = KIT.u;
+  let seaMat = null;
+  W.setSeaTheme = function (dark) {
+    W._dark = dark;
+    if (seaMat) seaMat.color.set(dark ? 0x16323f : 0x2d5f75);
+  };
+
+  W.buildStation = function (d, M) {
+    const root = new THREE.Group(), parts = {}, anchors = {};
+    const V = (x, y, z) => new THREE.Vector3(x, y, z);
+    const G = () => new THREE.Group();
+    function tag(obj, id, edges) {
+      U.own(obj);
+      if (edges) U.edges(obj, M.edge, 30);
+      obj.traverse((o) => { if (o.isMesh) o.userData.part = id; });
+      (parts[id] = parts[id] || []).push(obj);
+      root.add(obj);
+      return obj;
+    }
+    const dep = d.in.depth, H = d.Hhub, Lb = d.blade, yTop = H - W.AXIS_H;
+    const SX = 7 * d.in.D, SZ = 5 * d.in.D;
+
+    // ---------- 배치: 스트링 = 행(x 방향). 두 번째 행 세 번째 터빈을 원점으로 ----------
+    const pos = [];
+    for (let r = 0; r < d.nStr; r++) for (let c = 0; c < d.tps && pos.length < d.n; c++) pos.push({ x: c * SX, z: -r * SZ, r });
+    const fi = d.nStr > 1 && d.tps > 2 ? d.tps + 2 : 0;
+    const f0 = pos[Math.min(fi, pos.length - 1)];
+    const x0 = f0.x, z0 = f0.z;
+    pos.forEach((p) => { p.x -= x0; p.z -= z0; });
+    const n = pos.length;
+
+    // ---------- 바다 · 해저 ----------
+    seaMat = new THREE.MeshStandardMaterial({ color: W._dark ? 0x16323f : 0x2d5f75, roughness: 0.2, metalness: 0.05, transparent: true, opacity: 0.8, depthWrite: false });
+    const sea = new THREE.Mesh(new THREE.PlaneGeometry(60000, 60000), seaMat);
+    sea.rotation.x = -Math.PI / 2; root.add(sea);
+    const bed = new THREE.Mesh(new THREE.PlaneGeometry(60000, 60000), new THREE.MeshStandardMaterial({ color: 0xa99a78, roughness: 1 }));
+    bed.rotation.x = -Math.PI / 2; bed.position.y = -dep; root.add(bed);
+
+    // ---------- 터빈 (인스턴스) ----------
+    const white = new THREE.MeshStandardMaterial({ color: 0xe8ebed, roughness: 0.5, metalness: 0.1 });
+    const bladeMat = new THREE.MeshStandardMaterial({ color: 0xf4f5f6, roughness: 0.45 });
+    const yellow = new THREE.MeshStandardMaterial({ color: 0xe1b53c, roughness: 0.55 });
+    const pile = new THREE.MeshStandardMaterial({ color: 0x7d7f64, roughness: 0.7, metalness: 0.2 });
+    const towerIM = U.inst(new THREE.CylinderGeometry(2.6, 4.1, d.towerH, 28).translate(0, d.towerH / 2, 0), white, n, 'tower', []);
+    const nacIM = U.inst(new THREE.BoxGeometry(19.6, 7.5, 8.3), white, n, 'cover', []);
+    const hubIM = U.inst(new THREE.SphereGeometry(2.9, 20, 14), white, n, 'hub', []);
+    const spinIM = U.inst(new THREE.ConeGeometry(3.1, 3.4, 20).rotateZ(-Math.PI / 2), white, n, 'hub', []);
+    const bladeIM = U.inst(new THREE.CylinderGeometry(0.35, 2.0, Lb, 10).translate(0, Lb / 2 + 2.8, 0).scale(0.32, 1, 1), bladeMat, 3 * n, 'blade', []);
+    const tpIM = U.inst(new THREE.CylinderGeometry(4.6, 4.6, 5, 24).translate(0, 17.5, 0), yellow, n, 'tp', []);
+    const platIM = U.inst(new THREE.CylinderGeometry(7.2, 7.2, 0.4, 24).translate(0, 20, 0), M.al, n, 'tp', []);
+    const fdnIMs = [];
+    const dm = new THREE.Object3D(), mtx = new THREE.Matrix4(), q = new THREE.Quaternion(), one = new THREE.Vector3(1, 1, 1);
+    const place = (im, i, x, y, z) => { dm.position.set(x, y, z); dm.rotation.set(0, 0, 0); dm.scale.set(1, 1, 1); dm.updateMatrix(); im.setMatrixAt(i, dm.matrix); };
+    let monoIM = null, legIM = null, braceIM = null;
+    const JL = 8; // 재킷 다리 반간격
+    const jlevels = [-dep, (-dep + 12) / 2 - 3, 4, 12];
+    if (!d.jacket) {
+      const r = d.Dmp / 2, len = dep + 15 + 8;
+      monoIM = U.inst(new THREE.CylinderGeometry(r, r, len, 24).translate(0, 15 - len / 2, 0), pile, n, 'fdn', fdnIMs);
+    } else {
+      const legH = dep + 15 + 4;
+      legIM = U.inst(new THREE.CylinderGeometry(0.8, 0.8, legH, 10).translate(0, 15 - legH / 2, 0), pile, 4 * n, 'fdn', fdnIMs);
+      braceIM = U.inst(new THREE.CylinderGeometry(0.35, 0.35, 1, 8), pile, 24 * n, 'fdn', fdnIMs);
+    }
+    const corners = [[-JL, -JL], [JL, -JL], [JL, JL], [-JL, JL]];
+    const brace = (i, a, b) => {
+      const dir = b.clone().sub(a), len = dir.length();
+      q.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+      mtx.compose(a.clone().add(b).multiplyScalar(0.5), q, new THREE.Vector3(1, len, 1));
+      braceIM.setMatrixAt(i, mtx);
+    };
+    pos.forEach((p, i) => {
+      place(towerIM, i, p.x, 20, p.z);
+      place(nacIM, i, p.x - 4.6, yTop + 5.23, p.z);
+      place(hubIM, i, p.x + 8.6, H, p.z);
+      place(spinIM, i, p.x + 11.6, H, p.z);
+      place(tpIM, i, p.x, 0, p.z);
+      place(platIM, i, p.x, 0, p.z);
+      if (monoIM) place(monoIM, i, p.x, 0, p.z);
+      else {
+        corners.forEach(([cx, cz], k) => place(legIM, i * 4 + k, p.x + cx, 0, p.z + cz));
+        let b = i * 24;
+        for (let f = 0; f < 4; f++) {
+          const [ax, az] = corners[f], [bx, bz] = corners[(f + 1) % 4];
+          for (let l = 0; l < 3; l++) {
+            const y0 = jlevels[l], y1 = jlevels[l + 1];
+            brace(b++, V(p.x + ax, y0, p.z + az), V(p.x + bx, y1, p.z + bz));
+            brace(b++, V(p.x + bx, y0, p.z + bz), V(p.x + ax, y1, p.z + az));
+          }
+        }
+      }
+    });
+    tag(G().add(towerIM), 'tower'); tag(G().add(nacIM), 'cover'); tag(G().add(hubIM, spinIM), 'hub');
+    tag(G().add(bladeIM), 'blade'); tag(G().add(tpIM, platIM), 'tp');
+    const fg = G(); fdnIMs.forEach((m) => fg.add(m)); tag(fg, 'fdn');
+
+    // 블레이드 회전 (투어 시간으로 결정 → 녹화해도 같은 모습)
+    const omega = (d.rpm * 2 * Math.PI) / 60, X = new THREE.Vector3(1, 0, 0), pv = new THREE.Vector3();
+    const phase = pos.map((p, i) => (i * 1.7) % (Math.PI * 2));
+    const fIdx = Math.min(fi, n - 1);
+    anchors.blade = V(8.6, H + Lb * 0.55, 0);
+    function spin(t) {
+      pos.forEach((p, i) => {
+        for (let k = 0; k < 3; k++) {
+          q.setFromAxisAngle(X, omega * t + phase[i] + (k * 2 * Math.PI) / 3);
+          mtx.compose(pv.set(p.x + 8.6, H, p.z), q, one);
+          bladeIM.setMatrixAt(i * 3 + k, mtx);
+        }
+      });
+      bladeIM.instanceMatrix.needsUpdate = true;
+      const a = omega * t + phase[fIdx];
+      anchors.blade.set(8.6, H + Math.cos(a) * Lb * 0.55, Math.sin(a) * Lb * 0.55);
+    }
+    spin(0);
+
+    // ---------- 해상변전소 ----------
+    const mx = pos.reduce((s, p) => s + p.x, 0) / n, mz = pos.reduce((s, p) => s + p.z, 0) / n;
+    const ox = mx, oz = mz - SZ / 2;
+    const oss = G();
+    const legH = dep + 22 + 4;
+    const OL = [[-12, -9], [12, -9], [12, 9], [-12, 9]];
+    for (const [lx, lz] of OL) oss.add(U.cyl(1.2, 1.2, legH, pile, ox + lx, 22 - legH / 2, oz + lz, null, 12));
+    for (let f = 0; f < 4; f++) {
+      const [ax, az] = OL[f], [bx, bz] = OL[(f + 1) % 4];
+      for (const [y0, y1] of [[-dep, (-dep + 18) / 2], [(-dep + 18) / 2, 18]]) {
+        oss.add(U.poly([[ox + ax, y0, oz + az], [ox + bx, y1, oz + bz]], 0.45, pile));
+        oss.add(U.poly([[ox + bx, y0, oz + bz], [ox + ax, y1, oz + az]], 0.45, pile));
+      }
+    }
+    oss.add(U.box(38.4, 0.6, 26.4, M.alDark, ox, 22.3, oz));
+    oss.add(U.box(38, 20, 26, M.bldg, ox, 32.6, oz));
+    oss.add(U.cyl(11, 11, 0.5, M.alDark, ox + 10, 45, oz + 4, null, 36));
+    for (const [hx, hz] of [[4, -2], [16, -2], [4, 10], [16, 10]]) oss.add(U.box(0.4, 2.6, 0.4, M.alDark, ox + hx, 43.6, oz + hz));
+    oss.add(U.cyl(0.9, 0.9, 5, M.prot, ox - 14, 45, oz - 8, null, 12));
+    oss.add(U.poly([[ox - 14, 47.5, oz - 8], [ox - 26, 56, oz - 14]], 0.5, M.prot));
+    tag(oss, 'oss', true);
+    anchors.oss = V(ox, 45.5, oz - 6); anchors.osst = V(ox, 30, oz + 13.1);
+    anchors.shr = V(ox + 19.1, 34, oz); anchors.strcb = V(ox - 19.1, 26, oz + 4);
+
+    // ---------- 케이블 (해저) ----------
+    const cableMat = new THREE.MeshStandardMaterial({ color: 0x2a2f33, roughness: 0.6 });
+    const cy = -dep + 0.8;
+    const arr = G(), groups = [];
+    for (let r = 0; r < d.nStr; r++) {
+      const row = pos.filter((p) => p.r === r).sort((a, b) => a.x - b.x);
+      if (!row.length) continue;
+      arr.add(U.poly(row.map((p) => [p.x, cy, p.z]), 2.0, cableMat));
+      const near = row.reduce((b, p) => (Math.abs(p.x - ox) < Math.abs(b.x - ox) ? p : b), row[0]);
+      arr.add(U.poly([[near.x, cy, near.z], [near.x, cy, oz + Math.sign(near.z - oz) * 9], [ox + Math.sign(near.x - ox || 1) * 12, cy, oz + Math.sign(near.z - oz) * 9]], 2.0, cableMat));
+      groups.push({ key: 'S' + (r + 1), name: `스트링 ${r + 1}`, anchor: V(row[0].x, H + 25, row[0].z) });
+    }
+    tag(arr, 'arrcab');
+    anchors.arrcab = V(SX * 0.5, cy + 1, 0);
+    const exp = G();
+    for (const s of [-1, 1]) exp.add(U.poly([[ox + s * 20, cy, oz - 9], [ox + s * 20, cy, oz - 30000]], 2.2, cableMat));
+    tag(exp, 'expcab');
+    anchors.expcab = V(ox + 20, cy + 1, oz - 1200);
+
+    // 정비선 (크기 비교용)
+    const boat = G();
+    boat.add(U.box(22, 2.2, 8, M.prot, 42, 0.6, 30));
+    boat.add(U.box(8, 3, 6, M.bldg, 38, 3.2, 30));
+    root.add(boat);
+
+    anchors.cover = V(-4.6, yTop + 9.2, 0); anchors.hub = V(11.6, H + 2.5, 0);
+    anchors.tower = V(0, 20 + d.towerH * 0.4, 3.9); anchors.tp = V(0, 20.4, 7.2);
+    anchors.fdn = d.jacket ? V(JL, -dep * 0.45, JL) : V(0, -dep * 0.45, d.Dmp / 2);
+    anchors.swg = V(3.9, 24, 0);
+
+    const focus = { pos: V(-4.6, yTop + 5.23, 0) };
+    const glowBox = U.noPick(new THREE.Mesh(new THREE.BoxGeometry(20.2, 8.1, 8.9), M.glow.clone()));
+    glowBox.position.copy(focus.pos); glowBox.visible = false;
+    root.add(glowBox);
+    const pickList = [];
+    root.traverse((o) => { if (o.isMesh && o.userData.part) pickList.push(o); });
+    return { root, parts, anchors, groups, focus, glowBox, pickList, H, spin, oss: { x: ox, z: oz } };
+  };
+})();
+</script>
+<script>
+/* js/wind.js */
+// 해상풍력 해부도 투어 설정 (엔진: js/engine.js)
+(function () {
+  const W = window.WIND, U = KIT.u, fmt = W.fmt;
+  const NACELLE = new Set(W.NACELLE_LABEL_ORDER.concat(['brake', 'crane', 'met']));
+  const TURBINE = ['tower', 'tp', 'fdn', 'swg'];
+
+  ANATOMY.run({
+    design: W,
+    buildStation: W.buildStation,
+    buildDetail: (M, d) => W.buildNacelle(M, d),
+    detailKey: (d) => `${Math.min(3, d.threads)}|${Math.min(20, d.nyaw)}`,
+    detailLabelOrder: W.NACELLE_LABEL_ORDER,
+    groupPart: 'arrcab',
+    groupSub: (d) => `터빈 ${d.tps}기 · ${fmt(d.tps * d.in.Pw)} MW`,
+    columns: ['터빈당', '스트링당', '단지 전체'],
+    scope: null,
+    kpis: (d) => [['풍력 터빈', d.n], ['블레이드', 3 * d.n], ['IGBT', d.igbt * d.n], ['연간 발전량 (GWh)', d.aep]],
+    header: (d) => ({
+      subtitle: `${fmt(d.in.P)} MW 해상풍력 · ${fmt(d.in.Pw, 1)} MW × ${fmt(d.n)}기 · 로터 ${fmt(d.in.D)} m · 수심 ${fmt(d.in.depth)} m · ${W.FIXED.arrKV}/${W.FIXED.expKV} kV`,
+      tabs: { 'lv-tower-s': `≈ ${Math.round(d.Hhub + d.in.D / 2)} m` },
+    }),
+    onStep: ({ t, scene, station }) => { if (scene === 'station') station.spin(t); },
+    onTheme: (M, dark) => W.setSeaTheme(dark),
+
+    T_END: 70,
+    SWITCH: [32, 66],
+    towerWindow: [16, 32],
+    CH: [
+      { k: '01 · 해상풍력 단지', s: '단지', t0: 0, t1: 8, lv: 'station', title: () => '해상풍력 단지',
+        text: (d) => `${fmt(d.in.P)} MW 해상풍력 단지입니다. ${fmt(d.in.Pw, 1)} MW 터빈 ${fmt(d.n)}기가 ${d.tps}기씩 ${W.FIXED.arrKV} kV 어레이 케이블로 묶여 해상변전소로 모이고, ${W.FIXED.expKV} kV 해저 케이블로 육지까지 ${fmt(d.in.dist)} km를 갑니다.` },
+      { k: '02 · 해상변전소', s: '변전소', t0: 8, t1: 16, lv: 'station', title: () => '어레이와 해상변전소',
+        text: (d) => `해상변전소에서 ${W.FIXED.arrKV} kV를 ${W.FIXED.expKV} kV로 올립니다. 긴 교류 해저 케이블은 충전 전류가 커서, 약 ${fmt(d.Qc)} Mvar를 케이블 양끝의 분로 리액터로 상쇄합니다.` },
+      { k: '03 · 풍력 터빈', s: '터빈', t0: 16, t1: 27, lv: 'tower', title: () => '풍력 터빈 한 기',
+        text: (d) => `로터 직경 ${fmt(d.in.D)} m, 허브 높이 ${fmt(d.Hhub)} m. 수심 ${fmt(d.in.depth)} m에 ${d.jacket ? '재킷' : '모노파일'} 기초를 세우고 트랜지션 피스 위에 타워를 올립니다. 로터는 정격에서 분당 ${fmt(d.rpm, 1)}회 돕니다.` },
+      { k: '04 · 나셀', s: '나셀', t0: 27, t1: 32, lv: 'tower', title: () => '나셀',
+        text: (d) => `단지 전체 ${fmt(d.n)}기 중 하나입니다. 이 나셀 안에서 바람의 회전력이 ${fmt(d.in.Pw, 1)} MW 전기로 바뀝니다.` },
+      { k: '05 · 분해', s: '분해', t0: 32, t1: 52, lv: 'sm', title: () => '나셀 분해',
+        text: (d) => `로터 → 메인 샤프트 → 중속 기어박스(${fmt(d.ratio)} : 1) → 영구자석 발전기 → 풀 컨버터 → 나셀 변압기 순으로 에너지가 흐릅니다.` },
+      { k: '06 · 출력 제어', s: '제어', t0: 52, t1: 62, lv: 'sm', usesMode: true, title: () => '출력 제어',
+        text: (d, m) => ({
+          mppt: `정격 풍속 ${fmt(d.vr, 1)} m/s 아래에서는 피치를 0°로 두고 발전기 토크로 회전수를 맞춰 바람 에너지를 최대로 뽑습니다(MPPT).`,
+          pitch: `정격 풍속 위에서는 블레이드를 비틀어(피치) 받는 힘을 덜어 출력을 ${fmt(d.in.Pw, 1)} MW로 묶어 둡니다.`,
+          fault: '계통 전압이 순간적으로 떨어지면 계통측 컨버터가 무효전류로 전압을 받치고, 내보내지 못한 전력은 DC 초퍼 저항에서 태웁니다(FRT).',
+        }[m] || '') + ' 풀 컨버터가 발전기와 계통을 떼어 놓아 둘을 따로 제어합니다.' },
+      { k: '07 · 복귀', s: '복귀', t0: 62, t1: 70, lv: 'station', title: () => '다시 단지로',
+        text: () => '모든 수량은 오른쪽 설계 기준에서 계산됩니다. 수심을 45 m보다 깊게 바꾸면 기초가 재킷으로 바뀝니다.' },
+    ],
+    explodeAt(t) {
+      if (t < 35) return 0;
+      if (t < 41) return U.smooth((t - 35) / 6);
+      if (t < 52) return 1;
+      if (t < 54) return 1 - 0.4 * U.smooth((t - 52) / 2);
+      if (t < 62) return 0.6;
+      if (t < 64.5) return 0.6 * (1 - U.smooth((t - 62) / 2.5));
+      return 0;
+    },
+    focusGlow(t, now) {
+      if (t >= 27 && t < 32) return 0.2 + 0.18 * (0.5 + 0.5 * Math.sin(now / 160));
+      if (t >= 66 && t < 68) return 0.36 * (1 - (t - 66) / 2);
+      return 0;
+    },
+    opWindow: [52, 62],
+    opGlowFrom: 53,
+    modeAt: (t) => (t < 54 || t >= 62 ? 'mppt' : ['mppt', 'pitch', 'fault'][Math.floor((t - 54) / 2.6) % 3]),
+    modes: {
+      mppt: { out: (d) => `v < ${fmt(d.vr, 1)} m/s · 피치 0° · P ∝ v³`, glow: [['gen', 0.8], ['gbx', 0.6], ['conv', 0.7]] },
+      pitch: { out: (d) => `v ≥ ${fmt(d.vr, 1)} m/s · 피치 ↑ · P = ${fmt(d.in.Pw, 1)} MW`, glow: [['pitchd', 0.9], ['pitchb', 0.8], ['blade', 0.5]] },
+      fault: { out: () => '계통 전압 강하 · 초퍼 ON · 무효전류 공급', glow: [['chop', 0.9], ['conv', 0.7], ['igbt', 0.7]] },
+    },
+    labelPlan: [
+      { t0: 0, t1: 8.2, ids: 'groups' },
+      { t0: 0, t1: 8.2, ids: ['oss', 'expcab'] },
+      { t0: 9, t1: 16, ids: ['oss', 'osst', 'shr', 'strcb', 'arrcab', 'expcab'], start: 9.3, step: 0.7 },
+      { t0: 17, t1: 27, ids: ['blade', 'hub', 'cover', 'tower', 'tp', 'fdn', 'swg'], start: 17.5, step: 0.8 },
+      { t0: 27, t1: 32, ids: ['cover'] },
+      { t0: 41.3, t1: 52, ids: W.NACELLE_LABEL_ORDER, step: 0.52 },
+      { t0: 52, t1: 62, ids: ['gen', 'conv', 'pitchd', 'chop'] },
+    ],
+    nav(id, b) {
+      if (NACELLE.has(id)) return { zone: 'sm', t: 51.5, dist: 30 };
+      if (TURBINE.includes(id)) return { zone: 'tower', t: 22, dist: 80 };
+      if (b.lv === 'arm' || ['oss', 'osst', 'shr', 'expcab'].includes(id)) return { zone: 'station', t: 12, dist: 260 };
+      return { zone: 'station', t: 4, dist: 2000 };
+    },
+
+    site: {
+      noGround: true, grid: null, fog: [4000, 20000], sun: [-350, 520, 300], shadow: 220, shadowFar: 1500, ground: 0,
+      cam: { near: 1, far: 30000, min: 5, max: 20000, polar: 0.5 },
+    },
+    detail: {
+      key: [60, 90, 70], rim: [-70, 40, -50], shadow: 40, shadowFar: 300, grid: [120, 60],
+      cam: { near: 0.3, far: 1500, min: 8, max: 300, polar: 0.92 },
+    },
+    stationKeys(St) {
+      const H = St.H, F = St.focus, fx = F.pos.x, fy = F.pos.y, fz = F.pos.z, o = St.oss;
+      const far = { p: [o.x - 7000, 1900, o.z + 7000], q: [o.x, 0, o.z + 500] };
+      return {
+        before: [
+          { t: 0, ...far },
+          { t: 4, p: [o.x - 5200, 1300, o.z + 6000], q: [o.x, 0, o.z + 300] },
+          { t: 8, p: [o.x - 900, 420, o.z + 1900], q: [o.x, 40, o.z] },
+          { t: 12, p: [o.x + 230, 95, o.z + 280], q: [o.x, 30, o.z] },
+          { t: 16, p: [700, 260, 800], q: [0, H * 0.6, 0] },
+          { t: 20, p: [260, 140, 330], q: [0, H * 0.55, 0] },
+          { t: 24, p: [-170, 160, 210], q: [0, H * 0.8, 0] },
+          { t: 27.5, p: [-70, H + 18, 60], q: [-3, H, 0] },
+          { t: 32, p: [fx - 30, fy + 5, fz + 20], q: [fx, fy, fz] },
+        ],
+        after: [
+          { t: 66, p: [fx - 30, fy + 5, fz + 20], q: [fx, fy, fz] },
+          { t: 67.5, p: [-150, H + 60, 180], q: [0, H * 0.7, 0] },
+          { t: 70, ...far },
+        ],
+      };
+    },
+    detailKeys: [
+      { t: 32, p: [-34, 15, 30], q: [-2, 4.5, 0] },
+      { t: 35, p: [-34, 16, 32], q: [0, 4.5, 0] },
+      { t: 41, p: [-44, 24, 44], q: [1, 4.5, 0] },
+      { t: 46, p: [26, 22, 50], q: [2, 4.5, 0] },
+      { t: 52, p: [46, 18, 30], q: [3, 4.5, 0] },
+      { t: 55, p: [4, 14, 46], q: [6, 2.5, 0] },
+      { t: 62, p: [-32, 16, 36], q: [2, 4, 0] },
+      { t: 66, p: [-34, 15, 30], q: [-2, 4.5, 0] },
+    ],
+  });
+})();
+</script>
+</body>
+</html>

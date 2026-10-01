@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "gallery",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["serve.py", "--no-browser"],
+      "port": 8765
+    }
+  ]
+}

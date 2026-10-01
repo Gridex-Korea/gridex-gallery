@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.claude/settings.local.json
+Thumbs.db
+desktop.ini
+
+# 로컬 전용 작품(팬 작품 등): 공개 저장소에 올리지 않는다. 목록은 exhibits.local.js
+exhibits.local.js
+exhibits/mazinger-z-*.html
+thumbs/mazinger-z-*.png

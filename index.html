@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>해부도 전시관</title>
+<meta name="description" content="Claude와 대화하며 만든 해부도와 3D 구성도를 모아 실행해 보는 로컬 전시관">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Nanum+Gothic+Coding:wght@400;700&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<script src="exhibits.js"></script>
+<script src="exhibits.local.js"></script><!-- 로컬 전용 작품(없으면 건너뜀) -->
+<script src="assets/gallery.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast">
+    <div>
+      <p class="eyebrow">CLAUDE 작품 도면함</p>
+      <h1>해부도 전시관</h1>
+      <p class="lede">Claude와 대화하며 만든 해부도와 3D 구성도를 모아 두었습니다. 카드를 누르면 작품이 이 자리에서 실행됩니다.</p>
+      <p class="made"><span class="made-mark" aria-hidden="true"></span>이 전시관은 Claude Opus 5.5 최대 추론으로 만들었습니다</p>
+    </div>
+    <dl class="kyul" aria-label="전시관 표제란">
+      <div><dt>작성</dt><dd>Claude<br>Opus 5.5</dd></div>
+      <div><dt>추론</dt><dd><span class="seal" role="img" aria-label="최대 추론"><b>최대</b><small>MAX</small></span></dd></div>
+      <div><dt>작품</dt><dd id="count">0점</dd></div>
+      <div><dt>개관</dt><dd id="opened"></dd></div>
+    </dl>
+  </header>
+
+  <section aria-labelledby="shelf-h">
+    <div class="shelf">
+      <h2 id="shelf-h">전시 작품<span>최근 작품부터</span></h2>
+      <div class="filters" id="filters" role="group" aria-label="종류로 거르기" hidden></div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <footer class="foot">
+    <span>새 작품은 <code>exhibits/</code>에 넣고 <code>exhibits.js</code>에 항목을 하나 더하면 걸립니다. 순서는 README.md에 있습니다.</span>
+    <span>Claude Opus 5.5 · 최대 추론</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  const G = window.Gallery;
+  const $ = (id) => document.getElementById(id);
+  const ARROW = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
+  function el(tag, attrs, kids) {
+    const n = document.createElement(tag);
+    for (const k in attrs || {}) n.setAttribute(k, attrs[k]);
+    (kids || []).forEach((c) => n.append(c));
+    return n;
+  }
+
+  $("count").textContent = G.list.length + "점";
+  $("opened").textContent = G.date(G.info.opened);
+
+  function card(x) {
+    const t = x.thumb || {};
+    const a = el("a", { class: "sheet", href: "view.html?id=" + encodeURIComponent(x.id) });
+    a.dataset.type = x.type;
+    a.style.setProperty("--zoom", t.zoom || 1);
+    a.style.setProperty("--focus", t.focus || "50% 50%");
+
+    const img = el("img", { src: G.thumb(x), alt: "", loading: "lazy", decoding: "async" });
+    img.addEventListener("error", () => img.remove());
+    const plate = el("div", { class: "plate" }, [
+      el("div", { class: "ph", "aria-hidden": "true" }, [el("b", {}, [x.format]), el("span", {}, [x.no])]),
+      img,
+      el("span", { class: "fmt" }, [x.format])
+    ]);
+
+    const go = el("span", { class: "go" }, ["작품 실행"]);
+    go.insertAdjacentHTML("beforeend", ARROW);
+    const body = el("div", { class: "body" }, [
+      el("h3", {}, [x.title]),
+      el("p", { class: "sum" }, [x.summary]),
+      el("div", { class: "row" }, [
+        el("ul", { class: "feats", "aria-label": "할 수 있는 것" }, (x.features || []).map((f) => el("li", {}, [f]))),
+        go
+      ])
+    ]);
+
+    const cell = (k, v) => el("div", {}, [el("dt", {}, [k]), el("dd", {}, [v])]);
+    const tb = el("dl", { class: "tb", "aria-label": "표제란" }, [
+      cell("도번", x.no),
+      cell("종류", x.type),
+      cell("작성", G.shortBy(x)),
+      cell("일자", G.date(x.made))
+    ]);
+
+    a.append(plate, body, tb);
+    return a;
+  }
+
+  const grid = $("grid");
+  if (!G.list.length) {
+    grid.append(el("p", { class: "empty" }, ["아직 걸린 작품이 없습니다. README.md의 ‘작품 추가’ 순서대로 첫 작품을 넣어 보세요."]));
+  } else {
+    G.list.forEach((x) => grid.append(card(x)));
+  }
+
+  const types = [...new Set(G.list.map((x) => x.type))];
+  if (types.length > 1) {
+    const box = $("filters");
+    const btns = ["전체", ...types].map((t) => {
+      const n = t === "전체" ? G.list.length : G.list.filter((x) => x.type === t).length;
+      const b = el("button", { type: "button", "aria-pressed": String(t === "전체") }, [t + " " + n]);
+      b.addEventListener("click", () => {
+        btns.forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
+        grid.querySelectorAll(".sheet").forEach((s) => { s.hidden = t !== "전체" && s.dataset.type !== t; });
+      });
+      return b;
+    });
+    box.append(...btns);
+    box.hidden = false;
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1839 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>태양광 인버터 해부도</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* claude.ai 게시 골격이 넣어 주던 기본값 */
+body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+
+/* 해부도 공용 스타일 (MMC · STATCOM · 태양광 인버터) */
+:root{
+  --bg:#e6eaed; --panel:#f6f8f9; --panel-2:#edf1f3; --ink:#15202a; --ink-2:#44525e; --ink-3:#75838e;
+  --rule:#ccd4da; --rule-2:#dde3e7; --accent:#a4561f; --accent-ink:#fff; --accent-soft:#f3e2d4;
+  --view:#dae1e5; --ground:#ccd3d8; --grid-1:#b1bcc4; --grid-2:#c2cbd1; --edge:#2e3b47;
+  --glass:rgba(246,248,249,.86); --shadow:0 1px 2px rgba(20,30,40,.08),0 6px 20px rgba(20,30,40,.08);
+  --c-semi:#5b6f84; --c-pas:#3d7a73; --c-prot:#b5452e; --c-ctrl:#3a8445; --c-cool:#2f73b7;
+  --c-cond:#b8703a; --c-struct:#98a3ad; --c-ins:#a3947a; --c-mag:#77739a;
+  --f-display:"Barlow Condensed","IBM Plex Sans KR",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans KR",system-ui,-apple-system,"Malgun Gothic",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1418; --panel:#141c22; --panel-2:#1a242b; --ink:#dce4e9; --ink-2:#a1afb9; --ink-3:#6c7b86;
+    --rule:#28343d; --rule-2:#1e2930; --accent:#de8f56; --accent-ink:#1b0f06; --accent-soft:#3a2617;
+    --view:#0b1115; --ground:#111a20; --grid-1:#25323b; --grid-2:#1a252c; --edge:#aebfcb;
+    --glass:rgba(20,28,34,.86); --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1418; --panel:#141c22; --panel-2:#1a242b; --ink:#dce4e9; --ink-2:#a1afb9; --ink-3:#6c7b86;
+  --rule:#28343d; --rule-2:#1e2930; --accent:#de8f56; --accent-ink:#1b0f06; --accent-soft:#3a2617;
+  --view:#0b1115; --ground:#111a20; --grid-1:#25323b; --grid-2:#1a252c; --edge:#aebfcb;
+  --glass:rgba(20,28,34,.86); --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.3);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-body)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num,td.q,.kpi b,.tc{font-variant-numeric:tabular-nums}
+
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;padding-inline:16px;padding-block:12px 16px}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px 20px;flex-wrap:wrap}
+.brand h1{margin:0;font:700 32px/1 var(--f-display);letter-spacing:.005em;text-wrap:balance}
+.brand h1 span{color:var(--accent)}
+.brand p{margin:6px 0 0;font:500 12px/1.4 var(--f-mono);color:var(--ink-2);letter-spacing:.02em}
+.levels{display:flex;gap:4px;padding:4px;border:1px solid var(--rule);border-radius:10px;background:var(--panel-2)}
+.levels button{border:0;background:none;border-radius:7px;padding:6px 14px;text-align:left;color:var(--ink-2)}
+.levels button b{display:block;font:600 14px/1.2 var(--f-body)}
+.levels button small{font:500 11px/1.2 var(--f-mono);color:var(--ink-3)}
+.levels button[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:var(--shadow)}
+.levels button[aria-selected="true"] small{color:var(--accent)}
+
+.stage{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:12px}
+.view{position:relative;min-height:0;overflow:hidden;border:1px solid var(--rule);border-radius:12px;background:var(--view)}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+#fade{position:absolute;inset:0;background:var(--view);opacity:0;pointer-events:none}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+#leaders{position:absolute;inset:0;width:100%;height:100%}
+#leaders line{stroke:var(--ink-3);stroke-width:1}
+#leaders circle{stroke:var(--panel);stroke-width:1.5}
+.lbl{position:absolute;left:0;top:0;padding:3px 8px 4px;border:1px solid var(--rule);border-radius:6px;background:var(--glass);
+  white-space:nowrap;box-shadow:var(--shadow);transition:opacity .35s;will-change:transform}
+.lbl b{display:block;font:600 12px/1.3 var(--f-body)}
+.lbl i{display:block;font:400 10.5px/1.3 var(--f-mono);font-style:normal;color:var(--ink-2)}
+.lbl.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),var(--shadow)}
+
+.tools{position:absolute;left:12px;top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chipbtn{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--rule);border-radius:8px;background:var(--glass);font-size:12.5px;box-shadow:var(--shadow)}
+.chipbtn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.chipbtn input[type=range]{width:130px;accent-color:var(--accent)}
+.hint{font:500 11.5px var(--f-mono);color:var(--ink-3);padding:6px 2px}
+
+#info{position:absolute;left:12px;top:60px;width:min(330px,calc(100% - 24px));padding:12px 14px 14px;border:1px solid var(--rule);
+  border-radius:10px;background:var(--glass);box-shadow:var(--shadow);backdrop-filter:blur(6px)}
+#info .cat{display:flex;align-items:center;gap:6px;font:500 11px var(--f-mono);color:var(--ink-3);letter-spacing:.04em}
+#info h3{margin:4px 0 2px;font:600 17px/1.3 var(--f-body)}
+#info .spec{font:400 12px/1.45 var(--f-mono);color:var(--ink-2)}
+#info .qty{display:flex;gap:14px;margin:8px 0;padding:6px 0;border-block:1px solid var(--rule-2);font:500 12px var(--f-mono)}
+#info .qty span{color:var(--ink-3);font-weight:400}
+#info p{margin:0;font-size:13px;line-height:1.6;color:var(--ink-2)}
+#info .x{position:absolute;right:6px;top:6px;border:0;background:none;width:28px;height:28px;border-radius:6px;color:var(--ink-3);font-size:18px;line-height:1}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;flex:none}
+
+#schem{position:absolute;right:12px;top:12px;width:250px;padding:10px 12px 8px;border:1px solid var(--rule);border-radius:10px;background:var(--glass);box-shadow:var(--shadow)}
+#schem .hd{display:flex;justify-content:space-between;align-items:center;font:600 12px var(--f-body)}
+#schem .seg{display:flex;border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+#schem .seg button{border:0;background:none;padding:2px 8px;font-size:11.5px;color:var(--ink-2)}
+#schem .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+#schem svg{display:block;width:100%;height:auto;margin-top:6px}
+#schem .w{stroke:var(--ink-3);stroke-width:1.6;fill:none}
+#schem .el{stroke:var(--ink);stroke-width:1.6;fill:var(--panel)}
+#schem text{font:500 10px var(--f-mono);fill:var(--ink-2)}
+#schem .path{stroke:var(--accent);stroke-width:3.2;fill:none;stroke-dasharray:7 6;animation:flow 0.9s linear infinite;stroke-linejoin:round}
+#schem .out{margin-top:4px;font:500 11.5px var(--f-mono);color:var(--ink)}
+@keyframes flow{to{stroke-dashoffset:-13}}
+
+.caption{position:absolute;left:12px;bottom:64px;max-width:min(460px,calc(100% - 24px));padding:9px 13px;border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;background:var(--glass);box-shadow:var(--shadow)}
+.caption .k{font:600 13px/1.2 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.caption h2{margin:2px 0 3px;font:600 17px/1.3 var(--f-body);text-wrap:balance}
+.caption p{margin:0;font-size:13px;line-height:1.55;color:var(--ink-2)}
+
+.transport{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--glass);border-top:1px solid var(--rule)}
+.play{flex:none;width:36px;height:36px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+.play svg{width:14px;height:14px}
+.tc{flex:none;font:500 12px var(--f-mono);color:var(--ink-2);min-width:92px}
+.track{position:relative;flex:1;height:30px;display:flex;gap:2px;align-items:stretch;cursor:pointer;touch-action:none}
+.track .sg{position:relative;flex:1 1 0;min-width:0;border-radius:3px;background:var(--rule-2);overflow:hidden}
+.track .sg span{position:absolute;left:6px;top:50%;transform:translateY(-50%);font:500 10.5px var(--f-mono);color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 8px)}
+.track .sg i{position:absolute;inset:0;width:0;background:var(--accent-soft)}
+.track .sg.on span{color:var(--accent)}
+.track .ph{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--accent);border-radius:1px;pointer-events:none}
+
+.panel{min-height:0;display:flex;flex-direction:column;border:1px solid var(--rule);border-radius:12px;background:var(--panel);overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid var(--rule)}
+.tabs button{flex:1;border:0;background:none;padding:11px 12px;font-weight:600;color:var(--ink-3);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.pane{flex:1;min-height:0;overflow:auto;padding:14px 16px 18px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.kpi{background:var(--panel-2);padding:8px 10px}
+.kpi b{display:block;font:600 22px/1.05 var(--f-display);letter-spacing:.01em}
+.kpi span{font-size:11.5px;color:var(--ink-2)}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 8px;flex-wrap:wrap}
+.seg2{display:flex;border:1px solid var(--rule);border-radius:7px;overflow:hidden}
+.seg2 button{border:0;background:none;padding:5px 10px;font-size:12.5px;color:var(--ink-2)}
+.seg2 button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.btn{border:1px solid var(--rule);background:var(--panel-2);border-radius:7px;padding:5px 11px;font-size:12.5px}
+.btn:hover{border-color:var(--ink-3)}
+.tablewrap{overflow-x:auto}
+table.bom{width:100%;border-collapse:collapse;font-size:13px}
+.bom th{position:sticky;top:-14px;background:var(--panel);z-index:1;text-align:right;font:500 11px var(--f-mono);color:var(--ink-3);padding:6px 6px;border-bottom:1px solid var(--rule);white-space:nowrap}
+.bom th:first-child{text-align:left;padding-left:0}
+.bom tr.grp td{padding:14px 0 5px;font:600 13px/1.2 var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2);border-bottom:1px solid var(--rule)}
+.bom tr.it{cursor:pointer}
+.bom tr.it td{padding:7px 6px;border-bottom:1px solid var(--rule-2);vertical-align:top}
+.bom tr.it td:first-child{padding-left:0}
+.bom tr.it:hover td{background:var(--panel-2)}
+.bom tr.it.sel td{background:var(--accent-soft)}
+.bom tr.it.flash td{animation:flash 1.4s ease-out}
+@keyframes flash{0%{background:var(--accent-soft)}100%{background:transparent}}
+.bom .nm{display:flex;gap:8px;align-items:flex-start}
+.bom .nm .sw{margin-top:5px}
+.bom .nm b{display:block;font-weight:600}
+.bom .nm small{display:block;font:400 11.5px/1.45 var(--f-mono);color:var(--ink-2)}
+.bom td.q{text-align:right;white-space:nowrap;font-family:var(--f-mono);font-size:12.5px}
+.bom td.q.dim{color:var(--ink-3)}
+.bom td.q.tot{font-weight:500;color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:14px;font-size:12px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.note{margin:12px 0 0;font-size:12px;line-height:1.6;color:var(--ink-3)}
+
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.fld label{display:block;font-size:12px;color:var(--ink-2);margin-bottom:3px}
+.fld .in{display:flex;align-items:center;border:1px solid var(--rule);border-radius:7px;background:var(--panel-2);padding-right:9px}
+.fld input{width:100%;min-width:0;border:0;background:none;padding:7px 9px;font:500 14px var(--f-mono);outline:none}
+.fld .in:focus-within{border-color:var(--accent)}
+.fld .in span{font:400 12px var(--f-mono);color:var(--ink-3);white-space:nowrap}
+h4{margin:20px 0 6px;font:600 13px/1.2 var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2)}
+dl.derived{display:grid;grid-template-columns:1fr auto;margin:0;border-top:1px solid var(--rule)}
+dl.derived dt,dl.derived dd{margin:0;padding:6px 0;border-bottom:1px solid var(--rule-2);font-size:13px}
+dl.derived dt{color:var(--ink-2)}
+dl.derived dd{text-align:right;font:500 13px var(--f-mono);font-variant-numeric:tabular-nums}
+dl.derived dd.warn{color:var(--c-prot)}
+ul.assume{margin:0;padding-left:18px;font-size:12.5px;line-height:1.7;color:var(--ink-2)}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);padding:8px 14px;border-radius:8px;background:var(--ink);color:var(--panel);font-size:13px;box-shadow:var(--shadow)}
+
+@media (max-width:1100px){ .stage{grid-template-columns:minmax(0,1fr) 380px} .kpi b{font-size:19px} }
+@media (max-width:900px){
+  html,body{height:auto}
+  .app{height:auto}
+  .stage{grid-template-columns:minmax(0,1fr)}
+  .view{height:min(72vh,600px);min-height:420px}
+  .pane{overflow:visible}
+  .track .sg span{display:none}
+  #schem{width:210px}
+}
+@media (max-width:560px){
+  .brand h1{font-size:26px}
+  .levels{width:100%}
+  .levels button{flex:1;padding:6px 8px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .caption{bottom:60px;padding:8px 10px}
+  .caption h2{font-size:15px}
+  .caption p{font-size:12.5px}
+  #schem{top:auto;bottom:178px;width:190px}
+  .tc{min-width:0;font-size:11px}
+  .form{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){ #schem .path{animation:none} .lbl{transition:none} .bom tr.it.flash td{animation:none} }
+
+/* 녹화 모드 (tools/record_mp4.py) */
+body.rec .tools,body.rec .transport,body.rec #info,body.rec .tabs,body.rec .bar,body.rec .note,body.rec #pane-design{display:none!important}
+body.rec .lbl{transition:none}
+body.rec #schem .path{animation:none}
+body.rec .caption{bottom:14px}
+body.rec #pane-bom{display:flex;flex-direction:column;gap:12px;overflow:hidden}
+body.rec .tablewrap{flex:1;min-height:0;overflow:hidden}
+body.rec .bom th{top:0}
+body.rec .bom tr.it.lit td{background:var(--panel-2)}
+body.rec .bom tr.it.now td{background:var(--accent-soft)}
+body.rec .bom tr.it.now b{color:var(--accent)}
+body.rec-split .stage{grid-template-columns:minmax(0,1fr) 380px}
+body.rec-full .top,body.rec-full .panel{display:none}
+body.rec-full .app{padding:0;grid-template-rows:minmax(0,1fr)}
+body.rec-full .stage{grid-template-columns:minmax(0,1fr)}
+body.rec-full .view{border:0;border-radius:0}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1>태양광 인버터 <span>해부도</span></h1>
+      <p id="subtitle">100 MW(AC) · 1,500 V · 센트럴 인버터 3.3 MVA · 22.9 kV 집전</p>
+    </div>
+    <nav class="levels" role="tablist" aria-label="보기 수준">
+      <button role="tab" id="lv-station" data-t="0" aria-selected="true"><b>발전 블록</b><small>≈ 600 m</small></button>
+      <button role="tab" id="lv-tower" data-t="18" aria-selected="false"><b>인버터 스테이션</b><small id="lv-tower-s">≈ 14 m</small></button>
+      <button role="tab" id="lv-sm" data-t="32" aria-selected="false"><b>인버터</b><small>≈ 2.8 m</small></button>
+    </nav>
+  </header>
+
+  <main class="stage">
+    <section class="view" id="view" aria-label="3D 뷰">
+      <canvas id="gl" tabindex="0" aria-label="태양광 발전 블록과 인버터 3D 모델. 드래그로 회전, 휠로 확대, 클릭으로 부품 선택"></canvas>
+      <div id="labels"><svg id="leaders"></svg></div>
+      <div id="fade"></div>
+
+      <div class="tools">
+        <label class="chipbtn" id="explodeCtl" hidden>분해
+          <input type="range" id="explode" min="0" max="100" value="0" aria-label="분해 정도">
+        </label>
+        <button class="chipbtn" id="xray" aria-pressed="false" hidden>밸브홀 투시</button>
+        <span class="hint" id="hint">드래그 회전 · 휠 확대 · 부품 클릭</span>
+      </div>
+
+      <div id="info" hidden>
+        <button class="x" id="infoClose" aria-label="닫기">×</button>
+        <div class="cat"><span class="sw" id="infoSw"></span><span id="infoCat"></span></div>
+        <h3 id="infoName"></h3>
+        <div class="spec" id="infoSpec"></div>
+        <div class="qty" id="infoQty"></div>
+        <p id="infoDesc"></p>
+      </div>
+
+      <div id="schem" hidden>
+        <div class="hd">3레벨 ANPC 한 상
+          <div class="seg" role="group" aria-label="스위칭 상태">
+            <button data-mode="P" aria-pressed="true">P</button><button data-mode="O" aria-pressed="false">O</button><button data-mode="N" aria-pressed="false">N</button>
+          </div>
+        </div>
+        <svg viewBox="0 0 250 176" aria-hidden="true">
+          <path class="w" d="M30 20H150M30 160H150M30 20V50M30 60V120M30 130V160M30 91H100M150 20V26M150 48V60M150 82V98M150 120V134M150 156V160M150 91H206M100 54H150M100 128H150M100 54V68M100 80V104M100 116V128M93 68H107M93 104H107"/>
+          <line class="w" x1="14" y1="50" x2="46" y2="50" style="stroke:var(--ink);stroke-width:2.4"/>
+          <line class="w" x1="14" y1="60" x2="46" y2="60" style="stroke:var(--ink);stroke-width:2.4"/>
+          <line class="w" x1="14" y1="120" x2="46" y2="120" style="stroke:var(--ink);stroke-width:2.4"/>
+          <line class="w" x1="14" y1="130" x2="46" y2="130" style="stroke:var(--ink);stroke-width:2.4"/>
+          <text x="2" y="24">P</text><text x="2" y="95">O</text><text x="2" y="164">N</text>
+          <rect class="el" x="140" y="26" width="20" height="22" rx="3"/><text x="164" y="41">S1</text>
+          <rect class="el" x="140" y="60" width="20" height="22" rx="3"/><text x="164" y="75">S2</text>
+          <rect class="el" x="140" y="98" width="20" height="22" rx="3"/><text x="164" y="113">S3</text>
+          <rect class="el" x="140" y="134" width="20" height="22" rx="3"/><text x="164" y="149">S4</text>
+          <path class="el" d="M93 80L107 80L100 68Z"/><path class="el" d="M93 116L107 116L100 104Z"/>
+          <circle cx="210" cy="91" r="3.5" class="el"/><text x="200" y="80">AC</text>
+          <polyline class="path" data-path="P" points="210,91 150,91 150,20 30,20 30,50"/>
+          <polyline class="path" data-path="O" points="210,91 150,91 150,54 100,54 100,91 30,91" style="display:none"/>
+          <polyline class="path" data-path="N" points="210,91 150,91 150,160 30,160 30,130" style="display:none"/>
+        </svg>
+        <div class="out" id="schemOut">v<sub>AO</sub> = +V<sub>dc</sub>/2</div>
+      </div>
+
+      <div class="caption" id="caption">
+        <div class="k" id="capK">01 · 발전 블록</div>
+        <h2 id="capT">태양광 발전 블록</h2>
+        <p id="capP"></p>
+      </div>
+
+      <div class="transport">
+        <button class="play" id="play" aria-label="일시정지">
+          <svg viewBox="0 0 14 14" id="icPause"><rect x="2" y="1" width="3.5" height="12" fill="currentColor"/><rect x="8.5" y="1" width="3.5" height="12" fill="currentColor"/></svg>
+          <svg viewBox="0 0 14 14" id="icPlay" hidden><path d="M3 1L13 7L3 13Z" fill="currentColor"/></svg>
+        </button>
+        <span class="tc" id="tc">00:00 / 01:08</span>
+        <div class="track" id="track" role="slider" tabindex="0" aria-label="투어 위치" aria-valuemin="0" aria-valuemax="68" aria-valuenow="0"></div>
+      </div>
+    </section>
+
+    <aside class="panel" aria-label="부품 리스트와 설계 기준">
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-bom" aria-selected="true" aria-controls="pane-bom">부품 리스트</button>
+        <button role="tab" id="tab-design" aria-selected="false" aria-controls="pane-design">설계 기준</button>
+      </div>
+      <section class="pane" id="pane-bom" role="tabpanel" aria-labelledby="tab-bom">
+        <div class="kpis" id="kpis"></div>
+        <div class="bar">
+          <div class="seg2" role="group" aria-label="합계 기준">
+            <button id="sc-a" aria-pressed="true">스테이션 1곳</button><button id="sc-b" aria-pressed="false">링크 양단 ×2</button>
+          </div>
+          <button class="btn" id="csv">CSV 복사</button>
+        </div>
+        <div class="tablewrap"><table class="bom" id="bom"></table></div>
+        <div class="legend" id="legend"></div>
+        <p class="note">수량은 설계 기준 탭의 값으로 계산한 개략 산정입니다. 행을 누르면 3D에서 해당 부품을 찾아갑니다.</p>
+      </section>
+      <section class="pane" id="pane-design" role="tabpanel" aria-labelledby="tab-design" hidden>
+        <div class="form" id="form"></div>
+        <div class="bar"><span class="hint">값을 바꾸면 타워 층수와 부품 수량이 다시 계산됩니다.</span><button class="btn" id="reset">기본값</button></div>
+        <h4>산정 결과</h4>
+        <dl class="derived" id="derived"></dl>
+        <h4>가정</h4>
+        <ul class="assume" id="assume"></ul>
+      </section>
+    </aside>
+  </main>
+</div>
+<div id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script>
+/* js/kit.js */
+// 해부도 공용 3D 키트: 재질, 도형 헬퍼, 애자·실드 링 형상 (단위: m)
+(function () {
+  const KIT = (window.KIT = {});
+  const U = (KIT.u = {});
+  if (THREE.ColorManagement) THREE.ColorManagement.legacyMode = false; // hex = sRGB로 해석
+
+  KIT.makeMaterials = function () {
+    const S = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.55, metalness: 0.15 }, o || {}));
+    return {
+      al: S(0xaab4bd, { roughness: 0.38, metalness: 0.75 }),
+      alDark: S(0x6f7b86, { roughness: 0.5, metalness: 0.6 }),
+      cond: S(0xc07a45, { roughness: 0.32, metalness: 0.85 }),
+      semi: S(0x5b6f84, { roughness: 0.45, metalness: 0.35 }),
+      pas: S(0x3d7a73, { roughness: 0.45, metalness: 0.3 }),
+      prot: S(0xb5452e, { roughness: 0.5 }),
+      ctrl: S(0x2f7a3f, { roughness: 0.7 }),
+      chip: S(0x1f262b, { roughness: 0.45 }),
+      ceramic: S(0xe8e3d8, { roughness: 0.3 }),
+      film: S(0xf1ede2, { roughness: 0.6 }),
+      fiber: S(0xe8892b, { roughness: 0.5 }),
+      cool: S(0x2f73b7, { roughness: 0.35 }),
+      coolRet: S(0x79aee0, { roughness: 0.35 }),
+      ins: S(0x8d8a82, { roughness: 0.85 }),
+      porcelain: S(0x7a5a44, { roughness: 0.35 }),
+      mag: S(0x77739a, { roughness: 0.55, metalness: 0.3 }),
+      concrete: S(0xb9bdbe, { roughness: 0.95 }),
+      bldg: S(0xc9ced2, { roughness: 0.8 }),
+      hall: S(0xc3cbd1, { roughness: 0.8, transparent: true, opacity: 1 }),
+      fan: S(0x2a3238, { roughness: 0.6 }),
+      smCap: S(0x3d7a73, { roughness: 0.5, metalness: 0.25 }),
+      smFront: S(0x7d8c9a, { roughness: 0.45, metalness: 0.5 }),
+      ground: new THREE.MeshStandardMaterial({ color: 0xccd3d8, roughness: 1 }),
+      edge: new THREE.LineBasicMaterial({ color: 0x2e3b47, transparent: true, opacity: 0.3 }),
+      glow: new THREE.MeshBasicMaterial({ color: 0xde8f56, transparent: true, opacity: 0.45, depthWrite: false }),
+    };
+  };
+
+  function noPick(o) { o.raycast = function () {}; return o; }
+  U.noPick = noPick;
+
+  U.mesh = function (geo, mat, x, y, z) {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x || 0, y || 0, z || 0);
+    m.castShadow = m.receiveShadow = true;
+    return m;
+  };
+  U.box = (w, h, d, mat, x, y, z) => U.mesh(new THREE.BoxGeometry(w, h, d), mat, x, y, z);
+  U.cyl = function (rt, rb, h, mat, x, y, z, axis, seg) {
+    const m = U.mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 28), mat, x, y, z);
+    if (axis === 'x') m.rotation.z = Math.PI / 2;
+    if (axis === 'z') m.rotation.x = Math.PI / 2;
+    return m;
+  };
+  U.tube = function (pts, r, mat, seg) {
+    const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(p[0], p[1], p[2])), false, 'catmullrom', 0.1);
+    return U.mesh(new THREE.TubeGeometry(curve, seg || Math.max(8, pts.length * 10), r, 8, false), mat);
+  };
+  // 직선 구간만으로 된 관 (도체, 배관)
+  U.poly = function (pts, r, mat) {
+    const path = new THREE.CurvePath();
+    for (let i = 0; i < pts.length - 1; i++)
+      path.add(new THREE.LineCurve3(new THREE.Vector3(...pts[i]), new THREE.Vector3(...pts[i + 1])));
+    return U.mesh(new THREE.TubeGeometry(path, (pts.length - 1) * 2, r, 8, false), mat);
+  };
+  U.edges = function (obj, mat, angle) {
+    obj.traverse((o) => {
+      if (o.isMesh && !o.isInstancedMesh && !o.userData.noEdge) {
+        const e = noPick(new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry, angle || 30), mat));
+        e.userData.isEdge = true;
+        o.add(e);
+      }
+    });
+    return obj;
+  };
+  // 부품별 하이라이트를 위해 재질 복제
+  U.own = function (obj) {
+    obj.traverse((o) => {
+      if (o.isMesh && o.material && o.material.isMeshStandardMaterial) {
+        o.material = o.material.clone();
+        o.userData.baseEmissive = o.material.emissive.clone();
+      }
+    });
+  };
+  const GLOW = new THREE.Color(0xd9793a);
+  U.glow = function (obj, amt) {
+    obj.traverse((o) => {
+      if (o.isMesh && o.userData.baseEmissive) {
+        if (amt > 0) { o.material.emissive.copy(GLOW); o.material.emissiveIntensity = amt; }
+        else { o.material.emissive.copy(o.userData.baseEmissive); o.material.emissiveIntensity = 1; }
+      }
+    });
+  };
+  U.center = function (obj) {
+    const b = new THREE.Box3().setFromObject(obj);
+    return b.isEmpty() ? obj.position.clone() : b.getCenter(new THREE.Vector3());
+  };
+  const smooth = (U.smooth = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x)));
+  const clamp01 = (U.clamp01 = (x) => Math.min(1, Math.max(0, x)));
+
+  U.insulatorGeo = function (h, rc, rs, pitch) {
+    const v = (x, y) => new THREE.Vector2(x, y);
+    const pts = [v(0.001, 0), v(rs * 0.85, 0), v(rs * 0.85, 0.06), v(rc, 0.08)];
+    for (let y = 0.14; y < h - 0.16; y += pitch) pts.push(v(rc, y), v(rs, y + 0.012), v(rs, y + 0.024), v(rc, y + 0.05));
+    pts.push(v(rc, h - 0.08), v(rs * 0.85, h - 0.06), v(rs * 0.85, h), v(0.001, h));
+    return new THREE.LatheGeometry(pts, 18);
+  }
+  U.ringGeo = function (hx, hz, rc, rt) {
+    const pts = [];
+    const cs = [[hx - rc, hz - rc, 0], [-(hx - rc), hz - rc, 0.5], [-(hx - rc), -(hz - rc), 1], [hx - rc, -(hz - rc), 1.5]];
+    for (const [cx, cz, a0] of cs) for (let i = 0; i <= 6; i++) {
+      const a = (a0 + i / 12) * Math.PI;
+      pts.push(new THREE.Vector3(cx + rc * Math.cos(a), 0, cz + rc * Math.sin(a)));
+    }
+    return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, true, 'centripetal'), 160, rt, 8, true);
+  }
+  U.inst = function (geo, mat, n, id, list) {
+    const m = new THREE.InstancedMesh(geo, mat, n);
+    m.castShadow = m.receiveShadow = true;
+    m.frustumCulled = false; // r147은 인스턴스 전체 경계구를 계산하지 않음
+    m.userData.part = id;
+    list.push(m);
+    return m;
+  }
+
+  // 분해도 조립체: piece()로 부품 조각을 등록하고 finish()로 엔진이 쓰는 인터페이스를 얻는다.
+  // off = 완전 분해 시 이동량, delay = 분해 순서(0–maxDelay), extra.role/labelHere/fade/ghost 선택
+  KIT.assembly = function (M, maxDelay) {
+    const root = new THREE.Group(), pieces = [];
+    const MAXD = maxDelay || 0.4;
+    function piece(id, obj, off, delay, extra) {
+      U.own(obj);
+      U.edges(obj, M.edge, 35);
+      obj.traverse((o) => { if (o.isMesh) o.userData.part = id; });
+      root.add(obj);
+      const p = Object.assign({ id, obj, base: obj.position.clone(), off: new THREE.Vector3(off[0], off[1], off[2]), delay: delay || 0 }, extra || {});
+      p.anchor = U.center(obj).sub(obj.position);
+      pieces.push(p);
+      return p;
+    }
+    function finish(floorId, floorBase) { // floorBase: 바닥 조각의 아랫면 높이 (기본 0)
+      const parts = {};
+      for (const p of pieces) (parts[p.id] = parts[p.id] || []).push(p);
+      function setExplode(E) {
+        for (const p of pieces) {
+          const a = smooth(clamp01((E - p.delay) / (1 - MAXD)));
+          p.obj.position.copy(p.base).addScaledVector(p.off, a);
+          if (p.ghost != null) { // 분해될수록 반투명해지는 외함 패널
+            const op = 1 - (1 - p.ghost) * a;
+            p.obj.traverse((o) => { if (o.isMesh) { o.material.transparent = op < 0.999; o.material.opacity = op; o.material.depthWrite = op > 0.6; } });
+          }
+          if (p.fade) {
+            const op = 1 - clamp01(E / 0.25);
+            p.obj.visible = op > 0.02;
+            p.obj.traverse((o) => { if (o.isMesh) { o.material.transparent = true; o.material.opacity = op; } else if (o.userData.isEdge) o.visible = op > 0.5; });
+          }
+        }
+      }
+      function anchor(id, out) {
+        const list = parts[id];
+        if (!list) return null;
+        const p = list.find((q) => q.labelHere) || list[0];
+        return out.copy(p.anchor).add(p.obj.position).applyMatrix4(root.matrixWorld);
+      }
+      function glow(id, amt, role) {
+        for (const p of parts[id] || []) if (!role || p.role === role) U.glow(p.obj, amt);
+      }
+      const pick = [];
+      root.traverse((o) => { if (o.isMesh) pick.push(o); });
+      setExplode(0);
+      return { root, pieces, parts, pick, setExplode, anchor, glow, floorY: () => parts[floorId][0].obj.position.y + (floorBase || 0) };
+    }
+    return { root, piece, finish };
+  };
+})();
+</script>
+<script>
+/* js/engine.js */
+// 해부도 엔진: 3D 투어 · 라벨 · 부품 리스트 · 설계 기준 · 녹화 모드.
+// 페이지는 설계 모듈, 모델 빌더, 투어 설정을 넘겨 ANATOMY.run(cfg)을 부른다. 설정 항목은 js/mmc.js 참고.
+// 장면은 둘: 'station'(현장 전체, 확대 구간 포함)과 'sm'(부품 하나의 분해도).
+(function () {
+  const U = KIT.u;
+  window.ANATOMY = { run };
+
+  function run(cfg) {
+    const D = cfg.design, fmt = D.fmt;
+    const $ = (id) => document.getElementById(id);
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const still = location.hash === '#thumb'; // 전시관 썸네일 촬영 때는 투어를 멈추고 한 장면에 고정
+    const wide = matchMedia('(min-width: 901px)');
+    const { T_END, SWITCH, CH } = cfg;
+    const hallAt = cfg.hallAt || null;
+    const XRAY = cfg.xrayPart || 'hall'; // hallAt으로 반투명해지는 외피 부품 id (M.hall 재질)
+    const chAt = (t) => { for (let i = CH.length - 1; i >= 0; i--) if (t >= CH[i].t0) return i; return 0; };
+    const sceneAt = (t) => (t < SWITCH[0] || t >= SWITCH[1] ? 'station' : 'sm');
+    const inTowerAt = (t) => t >= cfg.towerWindow[0] && t < cfg.towerWindow[1];
+
+    let inputs = Object.assign({}, D.DEFAULTS);
+    let d = D.compute(inputs);
+    const st = { t: 0, playing: false, scene: null, manualExplode: null, xray: null, schemMode: null, sel: null, hover: null,
+      scope: 'a', forceCam: true, blend: null, tween: null, pendingFocus: null };
+    let lastCap = '', lastGlow = '', lastMode = '', rec = null;
+    let station = null, detail = null, detailKey = null, K = null;
+
+    // ================= 패널 (WebGL 없어도 동작) =================
+    const CATS = D.CATS, BOM = D.BOM, BY = D.BOM_BY_ID, COLS = cfg.columns, SCOPE = cfg.scope;
+    const bomEl = $('bom');
+    const mult = () => (SCOPE && st.scope === 'b' ? SCOPE.mult : 1);
+    function renderBOM() {
+      const m = mult();
+      const cell = (v) => `<td class="q${v == null ? ' dim' : ''}">${v == null ? '—' : fmt(v)}</td>`;
+      let h = `<thead><tr><th>품목 · 사양</th><th>${COLS[0]}</th><th>${COLS[1]}</th><th>${m > 1 ? SCOPE.col : COLS[2]}</th></tr></thead><tbody>`;
+      for (const lv of Object.keys(D.LEVELS)) {
+        h += `<tr class="grp"><td colspan="4">${D.LEVELS[lv]}</td></tr>`;
+        for (const b of BOM.filter((x) => x.lv === lv)) {
+          const q = D.qty(b, d);
+          h += `<tr class="it${st.sel === b.id ? ' sel' : ''}" data-id="${b.id}"><td><div class="nm"><span class="sw" style="background:${CATS[b.cat].color}"></span><div><b>${b.name}</b><small>${b.spec(d)}</small></div></div></td>` +
+            cell(q.sm) + cell(q.arm) + `<td class="q tot">${fmt(q.st * m)}</td></tr>`;
+        }
+      }
+      bomEl.innerHTML = h + '</tbody>';
+      $('kpis').innerHTML = cfg.kpis(d).map(([n, v]) => `<div class="kpi"><b>${fmt(v * m)}</b><span>${n}</span></div>`).join('');
+      if (rec) rec.key = '';
+    }
+    $('legend').innerHTML = Object.values(CATS).map((c) => `<span><i class="sw" style="background:${c.color}"></i>${c.name}</span>`).join('');
+    const rowOf = (id) => bomEl.querySelector(`tr[data-id="${id}"]`);
+    function flashRow(id) {
+      const r = rowOf(id);
+      if (!r || $('pane-bom').hidden) return;
+      r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash');
+    }
+    bomEl.addEventListener('click', (e) => { const r = e.target.closest('tr.it'); if (r) navigateTo(r.dataset.id); });
+    bomEl.addEventListener('mouseover', (e) => { const r = e.target.closest('tr.it'); st.hover = r ? r.dataset.id : null; });
+    bomEl.addEventListener('mouseleave', () => (st.hover = null));
+
+    if (SCOPE) {
+      $('sc-a').textContent = SCOPE.a; $('sc-b').textContent = SCOPE.b;
+      const setScope = (s) => {
+        st.scope = s;
+        $('sc-a').setAttribute('aria-pressed', s === 'a'); $('sc-b').setAttribute('aria-pressed', s === 'b');
+        renderBOM();
+      };
+      $('sc-a').onclick = () => setScope('a');
+      $('sc-b').onclick = () => setScope('b');
+    } else $('sc-a').parentElement.hidden = true;
+
+    let toastTimer;
+    function toast(msg) {
+      const el = $('toast'); el.textContent = msg; el.hidden = false;
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => (el.hidden = true), 2600);
+    }
+    $('csv').onclick = () => {
+      const esc = (v) => (/[",\n]/.test(v) ? `"${String(v).replace(/"/g, '""')}"` : v);
+      const rows = [['구분', '분류', '품목', '사양', ...COLS, ...(SCOPE ? [SCOPE.col] : [])]];
+      for (const b of BOM) {
+        const q = D.qty(b, d);
+        rows.push([D.LEVELS[b.lv], CATS[b.cat].name, b.name, b.spec(d), q.sm ?? '', q.arm ?? '', q.st, ...(SCOPE ? [q.st * SCOPE.mult] : [])]);
+      }
+      const csv = rows.map((r) => r.map((v) => esc(String(v))).join(',')).join('\n');
+      const fallback = () => {
+        const ta = document.createElement('textarea'); ta.value = csv; document.body.appendChild(ta); ta.select();
+        let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+        ta.remove();
+        toast(ok ? 'CSV를 복사했습니다. 엑셀에 붙여 넣으세요.' : '복사하지 못했습니다. 브라우저의 클립보드 권한을 확인하세요.');
+      };
+      try { navigator.clipboard.writeText(csv).then(() => toast('CSV를 복사했습니다. 엑셀에 붙여 넣으세요.'), fallback); }
+      catch (e) { fallback(); }
+    };
+
+    function setTab(which) {
+      const bom = which === 'bom';
+      $('tab-bom').setAttribute('aria-selected', bom); $('tab-design').setAttribute('aria-selected', !bom);
+      $('pane-bom').hidden = !bom; $('pane-design').hidden = bom;
+    }
+    $('tab-bom').onclick = () => setTab('bom');
+    $('tab-design').onclick = () => setTab('design');
+
+    $('form').innerHTML = D.INPUTS.map((f) => `<div class="fld"><label for="in-${f.k}">${f.label}</label><div class="in"><input id="in-${f.k}" type="number" inputmode="decimal" min="${f.min}" max="${f.max}" step="${f.step}" value="${inputs[f.k]}"><span>${f.unit}</span></div></div>`).join('');
+    $('assume').innerHTML = D.ASSUME.map((a) => `<li>${a}</li>`).join('');
+    function renderDerived() {
+      $('derived').innerHTML = D.derivedRows(d).map(([k, v, w]) => `<dt>${k}</dt><dd class="${w ? 'warn' : ''}">${v}</dd>`).join('');
+      const h = cfg.header(d);
+      $('subtitle').textContent = h.subtitle;
+      for (const id in h.tabs || {}) if ($(id)) $(id).textContent = h.tabs[id];
+    }
+    let designTimer;
+    function applyDesign() {
+      const raw = {};
+      for (const f of D.INPUTS) raw[f.k] = $('in-' + f.k).value;
+      inputs = D.clampInputs(raw);
+      d = D.compute(inputs);
+      renderBOM(); renderDerived(); lastCap = ''; lastMode = '';
+      if (gl) { rebuildStation(); rebuildDetail(); }
+    }
+    $('form').addEventListener('input', () => { clearTimeout(designTimer); designTimer = setTimeout(applyDesign, 350); });
+    $('form').addEventListener('change', (e) => {
+      const f = D.INPUTS.find((x) => 'in-' + x.k === e.target.id);
+      if (f) e.target.value = D.clampInputs({ ...inputs, [f.k]: e.target.value })[f.k];
+    });
+    $('reset').onclick = () => { for (const f of D.INPUTS) $('in-' + f.k).value = D.DEFAULTS[f.k]; applyDesign(); };
+
+    function showInfo(id) {
+      const b = id && BY[id];
+      $('info').hidden = !b;
+      if (!b) return;
+      const q = D.qty(b, d);
+      $('infoSw').style.background = CATS[b.cat].color;
+      $('infoCat').textContent = `${CATS[b.cat].name} · ${D.LEVELS[b.lv]}`;
+      $('infoName').textContent = b.name;
+      $('infoSpec').textContent = b.spec(d);
+      $('infoQty').innerHTML = [[COLS[0], q.sm], [COLS[1], q.arm], [COLS[2], q.st]].filter((x) => x[1] != null)
+        .map(([k, v]) => `<div><span>${k}</span> ${fmt(v)}</div>`).join('');
+      $('infoDesc').textContent = b.desc;
+    }
+    $('infoClose').onclick = () => select(null);
+    function select(id, from3D) {
+      if (id && id.startsWith('grp:')) id = cfg.groupPart;
+      st.sel = id;
+      bomEl.querySelectorAll('tr.it.sel').forEach((r) => r.classList.remove('sel'));
+      const r = id && rowOf(id);
+      if (r) { r.classList.add('sel'); if (from3D && wide.matches && !$('pane-bom').hidden) r.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+      showInfo(id);
+    }
+    renderBOM(); renderDerived();
+
+    // ================= 3D =================
+    const canvas = $('gl'), view = $('view');
+    let gl = null;
+    try { gl = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: still }); } catch (e) { gl = null; }
+    if (!gl) {
+      view.insertAdjacentHTML('beforeend', '<p style="position:absolute;left:16px;right:16px;top:40%;text-align:center;color:var(--ink-2)">이 브라우저에서 WebGL을 쓸 수 없어 3D를 표시하지 못했습니다. 부품 리스트는 그대로 볼 수 있습니다.</p>');
+      return;
+    }
+    gl.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    gl.setClearColor(0x000000, 0);
+    gl.outputEncoding = THREE.sRGBEncoding;
+    gl.toneMapping = THREE.ACESFilmicToneMapping;
+    gl.shadowMap.enabled = true;
+    gl.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    const M = KIT.makeMaterials();
+    let env = null;
+    if (THREE.RoomEnvironment) { const pm = new THREE.PMREMGenerator(gl); env = pm.fromScene(new THREE.RoomEnvironment(), 0.04).texture; pm.dispose(); }
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1500);
+    const controls = new THREE.OrbitControls(camera, canvas);
+    controls.enableDamping = true; controls.dampingFactor = 0.08; controls.screenSpacePanning = true;
+
+    const SITE = cfg.site, DET = cfg.detail;
+    const sS = new THREE.Scene();
+    sS.environment = env;
+    sS.fog = new THREE.Fog(0xdae1e5, SITE.fog[0], SITE.fog[1]);
+    sS.add(new THREE.HemisphereLight(0xffffff, 0x88929a, 0.35));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.25);
+    sun.position.set(...SITE.sun); sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    Object.assign(sun.shadow.camera, { left: -SITE.shadow, right: SITE.shadow, top: SITE.shadow, bottom: -SITE.shadow, near: 10, far: SITE.shadowFar });
+    sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04;
+    sS.add(sun);
+    if (!SITE.noGround) { // 해상 장면처럼 현장 모델이 자기 바닥(바다)을 그릴 때는 생략
+      const ground = new THREE.Mesh(new THREE.PlaneGeometry(SITE.ground, SITE.ground), M.ground);
+      ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02; ground.receiveShadow = true;
+      sS.add(ground);
+    }
+    let grid = null;
+
+    const sM = new THREE.Scene();
+    sM.environment = env;
+    sM.add(new THREE.HemisphereLight(0xffffff, 0x88929a, 0.4));
+    const key = new THREE.DirectionalLight(0xffffff, 1.2);
+    key.position.set(...DET.key); key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    Object.assign(key.shadow.camera, { left: -DET.shadow, right: DET.shadow, top: DET.shadow, bottom: -DET.shadow, near: 0.2, far: DET.shadowFar });
+    key.shadow.bias = -0.0005; key.shadow.normalBias = 0.01;
+    sM.add(key);
+    const rim = new THREE.DirectionalLight(0xffffff, 0.45); rim.position.set(...DET.rim); sM.add(rim);
+    const floor = new THREE.Group();
+    const shadowPlane = new THREE.Mesh(new THREE.PlaneGeometry(DET.grid[0] * 1.6, DET.grid[0] * 1.6), new THREE.ShadowMaterial({ opacity: 0.16 }));
+    shadowPlane.rotation.x = -Math.PI / 2; shadowPlane.receiveShadow = true; floor.add(shadowPlane);
+    let smGrid = null;
+    sM.add(floor);
+
+    const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    const isDark = () => {
+      const a = document.documentElement.getAttribute('data-theme');
+      return a ? a === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    };
+    function applyTheme() {
+      const dark = isDark();
+      sS.fog.color.set(cssVar('--view'));
+      M.ground.color.set(cssVar('--ground'));
+      M.edge.color.set(cssVar('--edge')); M.edge.opacity = dark ? 0.22 : 0.3;
+      const g1 = cssVar('--grid-1'), g2 = cssVar('--grid-2');
+      if (grid) { sS.remove(grid); grid.geometry.dispose(); grid = null; }
+      if (SITE.grid) { grid = new THREE.GridHelper(SITE.grid[0], SITE.grid[1], g1, g2); grid.position.y = 0.01; sS.add(grid); }
+      if (smGrid) { floor.remove(smGrid); smGrid.geometry.dispose(); }
+      smGrid = new THREE.GridHelper(DET.grid[0], DET.grid[1], g1, g2); smGrid.material.transparent = true; smGrid.material.opacity = 0.7; floor.add(smGrid);
+      gl.toneMappingExposure = dark ? 0.9 : 1.05;
+      if (cfg.onTheme) cfg.onTheme(M, dark);
+    }
+    applyTheme();
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+    new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    function disposeTree(root) {
+      root.traverse((o) => {
+        if (o.geometry) o.geometry.dispose();
+        if (o.material && o.userData.baseEmissive) o.material.dispose();
+      });
+    }
+    function rebuildStation() {
+      if (station) { sS.remove(station.root); station.dispose ? station.dispose() : disposeTree(station.root); }
+      station = cfg.buildStation(d, M);
+      sS.add(station.root);
+      K = cfg.stationKeys(station, d);
+      lastGlow = '';
+    }
+    function rebuildDetail() {
+      const k = cfg.detailKey ? cfg.detailKey(d) : 'static';
+      if (detail && k === detailKey) return;
+      if (detail) { sM.remove(detail.root); disposeTree(detail.root); }
+      detail = cfg.buildDetail(M, d);
+      sM.add(detail.root);
+      detailKey = k; lastGlow = '';
+    }
+
+    const cr = (a, b, c, e, u) => 0.5 * (2 * b + (-a + c) * u + (2 * a - 5 * b + 4 * c - e) * u * u + (-a + 3 * b - 3 * c + e) * u * u * u);
+    function camAt(keys, t, P, Q) {
+      const n = keys.length;
+      if (t <= keys[0].t) { P.fromArray(keys[0].p); Q.fromArray(keys[0].q); }
+      else if (t >= keys[n - 1].t) { P.fromArray(keys[n - 1].p); Q.fromArray(keys[n - 1].q); }
+      else {
+        let i = 0; while (i < n - 2 && t >= keys[i + 1].t) i++;
+        const k0 = keys[Math.max(0, i - 1)], k1 = keys[i], k2 = keys[i + 1], k3 = keys[Math.min(n - 1, i + 2)];
+        const u = (t - k1.t) / (k2.t - k1.t);
+        for (let j = 0; j < 3; j++) {
+          P.setComponent(j, cr(k0.p[j], k1.p[j], k2.p[j], k3.p[j], u));
+          Q.setComponent(j, cr(k0.q[j], k1.q[j], k2.q[j], k3.q[j], u));
+        }
+      }
+      // 세로 화면에서는 뒤로 물러나 전체가 들어오게
+      const k = camera.aspect < 1.15 ? Math.min(2.2, 1.3 / camera.aspect) : 1;
+      if (k !== 1) P.sub(Q).multiplyScalar(k).add(Q);
+    }
+
+    const explodeEl = $('explode'), xrayEl = $('xray'), schemEl = $('schem');
+    const pathEls = [...document.querySelectorAll('#schem [data-path]')];
+    const modeBtns = [...document.querySelectorAll('#schem [data-mode]')];
+    function setScene(name) {
+      st.scene = name;
+      const c = name === 'sm' ? DET.cam : SITE.cam;
+      camera.near = c.near; camera.far = c.far;
+      controls.minDistance = c.min; controls.maxDistance = c.max; controls.maxPolarAngle = Math.PI * c.polar;
+      camera.updateProjectionMatrix();
+      $('explodeCtl').hidden = name !== 'sm';
+      xrayEl.hidden = name !== 'station' || !hallAt;
+      lastGlow = '';
+    }
+
+    function setPlaying(on, cut) {
+      if (on) {
+        if (st.t >= T_END - 0.05) { st.t = 0; st.forceCam = true; }
+        st.manualExplode = null; st.xray = null; st.schemMode = null; st.tween = null;
+        st.blend = cut ? null : { p: camera.position.clone(), q: controls.target.clone(), start: performance.now(), dur: 1100 };
+      }
+      st.playing = on;
+      $('icPlay').hidden = on; $('icPause').hidden = !on;
+      $('play').setAttribute('aria-label', on ? '일시정지' : '재생');
+      $('hint').textContent = on ? '드래그하면 멈추고 직접 둘러봅니다' : '드래그 회전 · 휠 확대 · 부품 클릭';
+    }
+    function seek(t) {
+      st.t = Math.min(T_END, Math.max(0, t));
+      st.forceCam = true; st.blend = null; st.tween = null;
+      st.manualExplode = null; st.xray = null; st.schemMode = null;
+    }
+    $('play').onclick = () => setPlaying(!st.playing);
+    controls.addEventListener('start', () => { st.tween = null; if (st.playing) setPlaying(false); });
+    document.querySelectorAll('.levels button').forEach((b) => (b.onclick = () => seek(Number(b.dataset.t))));
+
+    const track = $('track');
+    track.setAttribute('aria-valuemax', T_END);
+    const segs = CH.map((c) => {
+      const s = document.createElement('div');
+      s.className = 'sg'; s.style.flexGrow = c.t1 - c.t0;
+      s.innerHTML = `<i></i><span>${c.s}</span>`;
+      track.appendChild(s);
+      return s;
+    });
+    const ph = document.createElement('div'); ph.className = 'ph'; track.appendChild(ph);
+    function tFromX(clientX) {
+      for (let i = 0; i < segs.length; i++) {
+        const r = segs[i].getBoundingClientRect();
+        if (clientX <= r.right + 1 || i === segs.length - 1)
+          return CH[i].t0 + U.clamp01((clientX - r.left) / r.width) * (CH[i].t1 - CH[i].t0);
+      }
+      return 0;
+    }
+    let scrubbing = false;
+    track.addEventListener('pointerdown', (e) => { scrubbing = true; track.setPointerCapture(e.pointerId); seek(tFromX(e.clientX)); });
+    track.addEventListener('pointermove', (e) => { if (scrubbing) seek(tFromX(e.clientX)); });
+    track.addEventListener('pointerup', () => (scrubbing = false));
+    track.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { seek(st.t + 2); e.preventDefault(); }
+      if (e.key === 'ArrowLeft') { seek(st.t - 2); e.preventDefault(); }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.code !== 'Space' || /INPUT|TEXTAREA|BUTTON|SELECT/.test(e.target.tagName)) return;
+      e.preventDefault(); setPlaying(!st.playing);
+    });
+
+    explodeEl.addEventListener('input', (e) => { if (st.playing) setPlaying(false); st.manualExplode = e.target.value / 100; });
+    xrayEl.onclick = () => { st.xray = !(st.xray != null ? st.xray : hallAt(st.t) < 0.5); };
+    modeBtns.forEach((b) => (b.onclick = () => { if (st.playing) setPlaying(false); st.schemMode = b.dataset.mode; }));
+
+    // 3D 선택
+    const ray = new THREE.Raycaster();
+    const ndc = new THREE.Vector2();
+    const visibleChain = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
+    function hitPart(e) {
+      const r = canvas.getBoundingClientRect();
+      ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      let list;
+      if (st.scene === 'sm') list = detail.pick;
+      else { const hallOn = !hallAt || M.hall.opacity > 0.6; list = station.pickList.filter((m) => hallOn || m.userData.part !== XRAY); }
+      for (const h of ray.intersectObjects(list, false)) if (visibleChain(h.object) && h.object.userData.part) return h.object.userData.part;
+      return null;
+    }
+    let down = null, lastMove = 0;
+    canvas.addEventListener('pointerdown', (e) => (down = { x: e.clientX, y: e.clientY }));
+    canvas.addEventListener('pointerup', (e) => {
+      if (!down) return;
+      const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+      down = null;
+      if (moved > 5) return;
+      const id = hitPart(e);
+      select(id && id === st.sel ? null : id, true);
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (down || e.pointerType !== 'mouse') return;
+      const now = performance.now();
+      if (now - lastMove < 80) return;
+      lastMove = now;
+      canvas.style.cursor = hitPart(e) ? 'pointer' : 'grab';
+    });
+
+    // 부품 리스트 → 3D로 이동
+    function navigateTo(id) {
+      const b = BY[id]; if (!b) return;
+      select(id);
+      const n = cfg.nav(id, b);
+      if (st.playing) setPlaying(false);
+      const E = st.manualExplode != null ? st.manualExplode : cfg.explodeAt(st.t);
+      const inTower = st.scene === 'station' && inTowerAt(st.t);
+      const ok = n.zone === 'sm' ? st.scene === 'sm' && E >= 0.5 : n.zone === 'tower' ? inTower : st.scene === 'station' && !inTower;
+      if (!ok) seek(n.t);
+      st.pendingFocus = { id, dist: n.dist };
+    }
+
+    // 라벨
+    const lblLayer = $('labels'), svg = $('leaders');
+    const SVGNS = 'http://www.w3.org/2000/svg';
+    const labels = new Map();
+    const groupOf = (id) => station.groups.find((x) => x.key === id.slice(4));
+    function labelInfo(id) {
+      if (id.startsWith('grp:')) {
+        const g = groupOf(id);
+        return { name: g ? g.name : id, sub: cfg.groupSub(d), color: CATS[BY[cfg.groupPart].cat].color };
+      }
+      const b = BY[id];
+      return { name: b.name, sub: b.short ? b.short(d) : b.spec(d), color: CATS[b.cat].color };
+    }
+    function labelEl(id) {
+      let L = labels.get(id);
+      if (!L) {
+        const el = document.createElement('div'); el.className = 'lbl'; el.style.opacity = '0';
+        lblLayer.appendChild(el);
+        const line = document.createElementNS(SVGNS, 'line');
+        const dot = document.createElementNS(SVGNS, 'circle'); dot.setAttribute('r', '3.5');
+        svg.appendChild(line); svg.appendChild(dot);
+        L = { el, line, dot, key: '', w: 0, h: 0, since: 0 };
+        labels.set(id, L);
+      }
+      const info = labelInfo(id), k = info.name + '|' + info.sub;
+      if (L.key !== k) {
+        L.el.innerHTML = `<b>${info.name}</b><i>${info.sub}</i>`;
+        L.key = k; L.w = L.el.offsetWidth; L.h = L.el.offsetHeight;
+        L.dot.setAttribute('fill', info.color);
+      }
+      return L;
+    }
+    const tmpV = new THREE.Vector3();
+    function anchorOf(id, out) {
+      if (st.scene === 'sm') return detail.anchor(id, out);
+      if (id.startsWith('grp:')) { const g = groupOf(id); return g ? out.copy(g.anchor) : null; }
+      const a = station.anchors[id];
+      return a ? out.copy(a) : null;
+    }
+    function labelsNow(t, E) {
+      const out = [];
+      if (st.scene === 'sm' && !st.playing && st.manualExplode != null) {
+        if (E >= 0.35) out.push(...cfg.detailLabelOrder);
+      } else {
+        for (const p of cfg.labelPlan) {
+          if (t < p.t0 || t >= p.t1) continue;
+          const ids = p.ids === 'groups' ? station.groups.map((g) => 'grp:' + g.key) : p.ids;
+          const s0 = p.start != null ? p.start : p.t0;
+          ids.forEach((id, i) => { if (!p.step || t >= s0 + i * p.step) out.push(id); });
+        }
+      }
+      if (st.sel && !out.includes(st.sel)) out.push(st.sel);
+      return out;
+    }
+    let prevShown = new Set();
+    let W = 1, H = 1;
+    function drawLabels(ids) {
+      const items = [];
+      for (const id of ids) {
+        if (!anchorOf(id, tmpV)) continue;
+        tmpV.project(camera);
+        if (tmpV.z > 1 || tmpV.z < -1) continue;
+        const sx = ((tmpV.x + 1) / 2) * W, sy = ((1 - tmpV.y) / 2) * H;
+        if (sx < -20 || sx > W + 20 || sy < -20 || sy > H + 20) continue;
+        items.push({ id, sx, sy, L: labelEl(id) });
+      }
+      items.sort((a, b) => a.sy - b.sy);
+      const placed = [];
+      const hit = (r) => placed.some((p) => r.x < p.x + p.w + 4 && r.x + r.w + 4 > p.x && r.y < p.y + p.h + 3 && r.y + r.h + 3 > p.y);
+      const shown = new Set();
+      const bottom = rec ? 16 : 70;
+      for (const it of items) {
+        const { L } = it, side = it.sx < W * 0.5 ? -1 : 1;
+        const r = { x: side < 0 ? it.sx - 28 - L.w : it.sx + 28, y: it.sy - 32 - L.h / 2, w: L.w, h: L.h };
+        r.x = Math.min(W - L.w - 6, Math.max(6, r.x));
+        const y0 = r.y;
+        for (let k = 1; k < 14 && hit(r); k++) r.y = y0 + (k % 2 ? -1 : 1) * Math.ceil(k / 2) * (L.h + 4);
+        r.y = Math.min(H - L.h - bottom, Math.max(6, r.y));
+        placed.push(r);
+        L.el.style.transform = `translate(${r.x}px,${r.y}px)`;
+        if (!prevShown.has(it.id)) L.since = st.t;
+        const op = rec ? U.clamp01((st.t - L.since) / 0.35) : 1;
+        L.el.style.opacity = String(op);
+        L.line.style.opacity = L.dot.style.opacity = String(op);
+        L.el.classList.toggle('sel', it.id === st.sel || (st.sel === cfg.groupPart && it.id.startsWith('grp:')));
+        const ex = side < 0 ? r.x + r.w : r.x, ey = r.y + r.h / 2;
+        L.line.setAttribute('x1', it.sx); L.line.setAttribute('y1', it.sy); L.line.setAttribute('x2', ex); L.line.setAttribute('y2', ey);
+        L.dot.setAttribute('cx', it.sx); L.dot.setAttribute('cy', it.sy);
+        L.line.style.display = L.dot.style.display = '';
+        shown.add(it.id);
+      }
+      for (const [id, L] of labels) if (!shown.has(id)) { L.el.style.opacity = '0'; L.line.style.display = L.dot.style.display = 'none'; }
+      if (st.playing && !rec) for (const id of shown) if (!prevShown.has(id) && BY[id]) flashRow(id);
+      prevShown = shown;
+    }
+
+    // 하이라이트 (선택 · 호버 · 회로 모드)
+    function applyGlow(list) {
+      const k = st.scene + JSON.stringify(list);
+      if (k === lastGlow) return;
+      lastGlow = k;
+      for (const p of detail.pieces) U.glow(p.obj, 0);
+      for (const id in station.parts) for (const o of station.parts[id]) U.glow(o, 0);
+      for (const [id, amt] of list) {
+        const [pid, role] = id.split(':');
+        if (st.scene === 'sm') detail.glow(pid, amt, role);
+        else if (station.parts[pid]) for (const o of station.parts[pid]) U.glow(o, amt);
+      }
+    }
+
+    function updateCaption(i, mode) {
+      const k = i + '|' + mode;
+      if (k === lastCap) return;
+      lastCap = k;
+      const c = CH[i];
+      $('capK').textContent = c.k; $('capT').textContent = c.title(d); $('capP').textContent = c.text(d, mode);
+      document.querySelectorAll('.levels button').forEach((b) => b.setAttribute('aria-selected', b.id === 'lv-' + c.lv));
+    }
+
+    function resize() {
+      W = view.clientWidth; H = view.clientHeight;
+      gl.setSize(W, H, false);
+      camera.aspect = W / Math.max(1, H);
+      camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(view);
+    resize();
+    rebuildStation();
+    rebuildDetail();
+    setScene('station');
+
+    // ================= 매 프레임 =================
+    const P = new THREE.Vector3(), Q = new THREE.Vector3();
+    let last = performance.now();
+    function frame(now) {
+      requestAnimationFrame(frame);
+      const dt = Math.min(0.1, (now - last) / 1000); last = now;
+      if (rec) return;
+      if (st.playing) { st.t += dt; if (st.t >= T_END) { st.t = T_END; setPlaying(false); } }
+      step(now, dt);
+    }
+    function step(now, dt) {
+      const t = st.t;
+      const sc = sceneAt(t);
+      if (sc !== st.scene) setScene(sc);
+
+      const E = st.manualExplode != null ? st.manualExplode : cfg.explodeAt(t);
+      detail.setExplode(E);
+      floor.position.y = detail.floorY() - 0.002;
+      if (document.activeElement !== explodeEl) explodeEl.value = Math.round(E * 100);
+
+      if (st.playing || st.forceCam) {
+        const keys = sc === 'sm' ? cfg.detailKeys : t < SWITCH[0] ? K.before : K.after;
+        camAt(keys, t, P, Q);
+        if (st.blend && st.playing) {
+          const u = U.smooth((now - st.blend.start) / st.blend.dur);
+          P.lerpVectors(st.blend.p, P, u); Q.lerpVectors(st.blend.q, Q, u);
+          if (u >= 1) st.blend = null;
+        }
+        camera.position.copy(P); controls.target.copy(Q);
+        st.forceCam = false;
+      }
+      if (st.pendingFocus) {
+        const f = st.pendingFocus; st.pendingFocus = null;
+        detail.root.updateMatrixWorld();
+        if (anchorOf(f.id, tmpV)) {
+          const dir = camera.position.clone().sub(controls.target).normalize();
+          st.tween = { p0: camera.position.clone(), q0: controls.target.clone(), q1: tmpV.clone(), p1: tmpV.clone().addScaledVector(dir, f.dist), start: now, dur: 900 };
+        }
+      }
+      if (st.tween) {
+        const w = st.tween, u = U.smooth((now - w.start) / w.dur);
+        camera.position.lerpVectors(w.p0, w.p1, u); controls.target.lerpVectors(w.q0, w.q1, u);
+        if (u >= 1) st.tween = null;
+      }
+      controls.update();
+
+      if (hallAt) {
+        const op = st.xray != null ? (st.xray ? 0.1 : 1) : hallAt(t);
+        M.hall.opacity = op; M.hall.depthWrite = op > 0.95;
+        xrayEl.setAttribute('aria-pressed', op < 0.5);
+      }
+      const gb = station.glowBox;
+      if (gb) {
+        const ga = cfg.focusGlow ? cfg.focusGlow(t, now) : 0;
+        gb.visible = ga > 0.01 && sc === 'station'; gb.material.opacity = ga;
+      }
+      let fa = 0;
+      for (const s of SWITCH) fa = Math.max(fa, 1 - Math.abs(t - s) / 0.45);
+      $('fade').style.opacity = Math.max(0, fa).toFixed(3);
+
+      // 회로 인셋 · 스위칭 모드
+      const i = chAt(t);
+      const [o0, o1] = cfg.opWindow;
+      const inOp = t >= o0 && t < o1;
+      const mode = st.playing ? cfg.modeAt(t) : st.schemMode || cfg.modeAt(t);
+      const schemOn = sc === 'sm' && (inOp || !st.playing);
+      schemEl.hidden = !schemOn;
+      if (schemOn) {
+        if (mode !== lastMode) {
+          lastMode = mode;
+          pathEls.forEach((el) => (el.style.display = el.dataset.path === mode ? '' : 'none'));
+          modeBtns.forEach((b) => b.setAttribute('aria-pressed', b.dataset.mode === mode));
+          $('schemOut').innerHTML = cfg.modes[mode].out(d);
+        }
+        if (rec) pathEls.forEach((el) => (el.style.strokeDashoffset = (-((t / 0.9) * 13) % 13).toFixed(2)));
+      }
+      updateCaption(i, CH[i].usesMode ? mode : '');
+
+      const g = [];
+      if (st.sel) g.push([st.sel, 0.55]);
+      if (st.hover && st.hover !== st.sel) g.push([st.hover, 0.35]);
+      if (sc === 'sm' && ((st.playing && t >= cfg.opGlowFrom && t < o1) || (!st.playing && st.schemMode))) g.push(...cfg.modes[mode].glow);
+      applyGlow(g);
+      if (cfg.onStep) cfg.onStep({ t, now, dt, scene: sc, station, detail, E, d });
+
+      segs.forEach((s, k) => {
+        const c = CH[k];
+        s.firstChild.style.width = (U.clamp01((t - c.t0) / (c.t1 - c.t0)) * 100).toFixed(2) + '%';
+        s.classList.toggle('on', k === i);
+      });
+      const cs = segs[i], cc = CH[i];
+      ph.style.left = (cs.offsetLeft + U.clamp01((t - cc.t0) / (cc.t1 - cc.t0)) * cs.offsetWidth - 1).toFixed(1) + 'px';
+      const mm = (x) => `${String(Math.floor(x / 60)).padStart(2, '0')}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+      $('tc').textContent = `${mm(t)} / ${mm(T_END)}`;
+      track.setAttribute('aria-valuenow', Math.round(t));
+
+      gl.render(sc === 'sm' ? sM : sS, camera);
+      const ids = labelsNow(t, E);
+      drawLabels(ids);
+      if (rec) recPanel(ids, t, dt);
+    }
+
+    // 녹화 모드: 라벨이 붙은 부품 행을 강조하고 표를 그 행으로 스크롤
+    function recPanel(ids, t, dt) {
+      const lit = [...new Set(ids.map((id) => (id.startsWith('grp:') ? cfg.groupPart : id)).filter((id) => BY[id]))];
+      for (const id in rec.since) if (!lit.includes(id)) delete rec.since[id];
+      for (const id of lit) if (!(id in rec.since)) rec.since[id] = t;
+      const fresh = lit.filter((id) => t - rec.since[id] < 1.6);
+      const k = lit.join() + '|' + fresh.join();
+      if (k !== rec.key) {
+        rec.key = k;
+        bomEl.querySelectorAll('tr.it').forEach((r) => {
+          const id = r.dataset.id;
+          r.classList.toggle('lit', lit.includes(id) && !fresh.includes(id));
+          r.classList.toggle('now', fresh.includes(id));
+        });
+      }
+      const pane = bomEl.parentElement;
+      const rows = (fresh.length ? fresh : lit).map(rowOf).filter(Boolean);
+      if (rows.length) {
+        const base = pane.getBoundingClientRect().top - pane.scrollTop, head = 40;
+        const top = Math.min(...rows.map((r) => r.getBoundingClientRect().top - base));
+        const bot = Math.max(...rows.map((r) => r.getBoundingClientRect().bottom - base));
+        const y = bot - top < pane.clientHeight - head ? (top + bot) / 2 - (pane.clientHeight + head) / 2 : top - head;
+        rec.target = Math.max(0, Math.min(pane.scrollHeight - pane.clientHeight, y));
+      }
+      if (rec.first) { rec.scroll = rec.target; rec.first = false; }
+      rec.scroll += (rec.target - rec.scroll) * (1 - Math.exp(-dt * 4));
+      pane.scrollTop = rec.scroll;
+    }
+    function gpuName() {
+      try {
+        const c = gl.getContext(), ext = c.getExtension('WEBGL_debug_renderer_info');
+        return ext ? c.getParameter(ext.UNMASKED_RENDERER_WEBGL) : c.getParameter(c.RENDERER);
+      } catch (e) { return 'unknown'; }
+    }
+    // tools/record_mp4.py가 쓰는 녹화 API
+    window.ANATOMY_REC = {
+      duration: T_END,
+      async start(layout) {
+        rec = { since: {}, key: '', scroll: 0, target: 0, first: true, lastT: null };
+        document.body.classList.add('rec', layout === 'full' ? 'rec-full' : 'rec-split');
+        setTab('bom'); select(null);
+        Object.assign(st, { hover: null, blend: null, tween: null, pendingFocus: null, manualExplode: null, xray: null, schemMode: null, playing: true });
+        if (document.fonts) await document.fonts.ready;
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        resize();
+        labels.forEach((L) => (L.key = ''));
+        prevShown = new Set();
+        return { width: W, height: H, gpu: gpuName() };
+      },
+      render(t) {
+        const dt = rec.lastT == null ? 0 : Math.max(0, t - rec.lastT);
+        rec.lastT = t;
+        st.t = Math.min(T_END, Math.max(0, t)); st.playing = true; st.forceCam = true;
+        step(st.t * 1000, dt);
+        return st.t;
+      },
+    };
+    if (still) seek(0);
+    setPlaying(!reduceMotion && !still, true);
+    if (document.fonts) document.fonts.ready.then(() => labels.forEach((L) => (L.key = '')));
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+<script>
+/* js/pv-design.js */
+// 태양광 발전소(센트럴 인버터) 설계 기준 → 파생값 → 부품 리스트
+(function () {
+  const PV = (window.PV = {});
+
+  PV.CATS = {
+    pv:     { name: '태양전지 모듈', color: '#27416b' },
+    semi:   { name: '전력반도체', color: '#5b6f84' },
+    pas:    { name: '수동소자', color: '#3d7a73' },
+    prot:   { name: '보호·개폐', color: '#b5452e' },
+    ctrl:   { name: '제어·통신', color: '#3a8445' },
+    cool:   { name: '냉각', color: '#2f73b7' },
+    cond:   { name: '도체', color: '#b8703a' },
+    struct: { name: '구조', color: '#98a3ad' },
+    mag:    { name: '변압기·인덕터', color: '#77739a' },
+  };
+
+  PV.INPUTS = [
+    { k: 'P', label: '발전소 AC 용량', unit: 'MW', min: 10, max: 1000, step: 10 },
+    { k: 'Sinv', label: '인버터 정격', unit: 'kVA', min: 1000, max: 6000, step: 100 },
+    { k: 'dcac', label: 'DC/AC 비율', unit: '', min: 1.0, max: 1.6, step: 0.05 },
+    { k: 'Pmod', label: '모듈 출력', unit: 'Wp', min: 300, max: 750, step: 5 },
+    { k: 'Voc', label: '모듈 개방전압 V_oc', unit: 'V', min: 30, max: 60, step: 0.1 },
+    { k: 'Tmin', label: '설계 최저 기온', unit: '°C', min: -35, max: 10, step: 1 },
+  ];
+  PV.DEFAULTS = { P: 100, Sinv: 3300, dcac: 1.25, Pmod: 600, Voc: 41.7, Tmin: -20 };
+  PV.FIXED = {
+    f: 60, Vdcmax: 1500, beta: 0.0025, vmpRatio: 0.835, strComb: 24, invBlock: 2, pfMin: 0.95, Vac: 630,
+    unitKVA: 1100, modA: 1400, fsw: 3000, cdcPerMVA: 3, mvKV: 22.9, gridKV: 154, blocksPerFeeder: 4, yield: 1300,
+  };
+
+  const fmt = (PV.fmt = (v, dec = 0) =>
+    v == null || !isFinite(v) ? '—'
+      : Number(v).toLocaleString('ko-KR', { minimumFractionDigits: dec, maximumFractionDigits: dec }));
+
+  PV.clampInputs = function (inp) {
+    const out = {};
+    for (const f of PV.INPUTS) {
+      let v = Number(inp[f.k]);
+      if (!isFinite(v)) v = PV.DEFAULTS[f.k];
+      out[f.k] = Math.min(f.max, Math.max(f.min, v));
+    }
+    return out;
+  };
+
+  PV.compute = function (inp) {
+    const x = PV.clampInputs(inp), F = PV.FIXED, w = 2 * Math.PI * F.f;
+    const VocMax = x.Voc * (1 + F.beta * (25 - x.Tmin));
+    const Ns = Math.floor(F.Vdcmax / VocMax);
+    const Vmp = F.vmpRatio * x.Voc * Ns;
+    const strInv = Math.ceil((x.Sinv * x.dcac * 1000) / (x.Pmod * Ns) - 1e-9);
+    const modInv = strInv * Ns;
+    const PdcInv = (modInv * x.Pmod) / 1e6;                 // MWp
+    const combInv = Math.ceil(strInv / F.strComb - 1e-9);
+    const blocks = Math.ceil((x.P * 1000) / (F.pfMin * x.Sinv) / F.invBlock - 1e-9);
+    const invTot = blocks * F.invBlock;
+    const ns = Math.max(1, Math.ceil(x.Sinv / F.unitKVA - 1e-9));   // 전력 유닛 수
+    const Iac = x.Sinv / (Math.sqrt(3) * (F.Vac / 1000));  // A
+    const Iunit = Iac / ns;
+    const ppar = Math.ceil((1.5 * Math.SQRT2 * Iunit) / F.modA - 1e-9);
+    const Vph = F.Vac / Math.sqrt(3);
+    return {
+      in: x, VocMax, Ns, Vmp, strInv, modInv, PdcInv, combInv, blocks, invTot, ns, Sunit: x.Sinv / ns, Iac, Iunit, ppar,
+      Idc: (PdcInv * 1e6) / Vmp,
+      L1: (Vmp / (16 * F.fsw * 0.2 * Math.SQRT2 * Iunit)) * 1e6,        // µH, 3레벨 리플 20 %
+      Cf: ((0.05 * x.Sinv * 1e3) / (3 * w * Vph * Vph)) * 1e6,         // µF/상, Y 등가 5 %
+      Cdc: F.cdcPerMVA * (x.Sinv / ns / 1000),                          // mF/유닛
+      Smv: (F.invBlock * x.Sinv) / 1000, Smain: Math.ceil(x.P / 0.9 / 10 - 1e-9) * 10,
+      feeders: Math.ceil(blocks / F.blocksPerFeeder), dcTot: PdcInv * invTot,
+      energy: (PdcInv * invTot * F.yield) / 1000,                        // GWh/년
+      tables: strInv,                                                   // 블록당 (2P, 테이블당 2 스트링)
+    };
+  };
+
+  // lv: sm = 인버터 1대당, arm = 블록(인버터 스테이션 + 어레이)당, st = 발전소 전체
+  PV.BOM = [
+    { id: 'cab', lv: 'sm', cat: 'struct', name: '인버터 함체', q: () => 1,
+      spec: () => 'IP54 옥외형 강판 · 전면 도어 2', short: () => 'IP54 옥외형',
+      desc: '전력 유닛과 필터, 개폐기를 비·먼지·염분으로부터 보호하는 옥외형 함체입니다. 내부 공기를 열교환기로 식혀 외기와 섞이지 않게 합니다.' },
+    { id: 'dcfuse', lv: 'sm', cat: 'prot', name: 'DC 입력 퓨즈', q: (d) => 2 * d.combInv,
+      spec: (d) => `1,500 V gPV · 입력 ${d.combInv}회로 × (+ · −)`, short: (d) => `${2 * d.combInv}개 · 1,500 V`,
+      desc: '접속반에서 오는 DC 주간선마다 +·− 양극에 퓨즈를 둡니다. 한 회로가 단락되면 다른 회로에서 몰려드는 역전류를 끊습니다.' },
+    { id: 'dcsw', lv: 'sm', cat: 'prot', name: 'DC 부하개폐기', q: (d) => d.ns,
+      spec: () => '1,500 V DC · 전력 유닛당 1', short: (d) => `× ${d.ns}`,
+      desc: '전력 유닛을 PV 어레이에서 떼어 냅니다. 낮에는 어레이가 늘 전압을 내므로, 부하 전류를 끊을 수 있는 개폐기가 필요합니다.' },
+    { id: 'spd', lv: 'sm', cat: 'prot', name: '서지보호기 (SPD)', q: () => 2,
+      spec: () => 'DC 1,500 V · AC 690 V · Type 1+2', short: () => 'DC · AC',
+      desc: '넓은 어레이에 떨어지는 유도뢰가 인버터로 들어오지 못하게 DC 입력과 AC 출력에 각각 둡니다.' },
+    { id: 'dclink', lv: 'sm', cat: 'pas', name: 'DC 링크 커패시터', q: (d) => d.ns,
+      spec: (d) => `≈ ${fmt(d.Cdc, 1)} mF / 1,500 V · 필름 · 상하 분할`, short: (d) => `${fmt(d.Cdc, 1)} mF × ${d.ns}`,
+      desc: '3레벨 인버터라서 커패시터 뱅크를 위(P–O)·아래(O–N) 둘로 나누고, 그 가운데가 중성점 O입니다. 스위칭 전류를 공급하고 두 절반의 전압 균형을 제어합니다.' },
+    { id: 'bus', lv: 'sm', cat: 'cond', name: '라미네이트 버스바 (P·O·N)', q: (d) => d.ns,
+      spec: () => 'Cu 3층 적층 · 전력 유닛당 1', short: () => 'P · O · N 3층',
+      desc: 'P·O·N 세 전위를 얇은 절연층을 사이에 두고 겹친 동판입니다. 루프 인덕턴스를 줄여 1,200 V 소자가 스위칭할 때 전압 서지를 억제합니다.' },
+    { id: 'igbt', lv: 'sm', cat: 'semi', name: 'IGBT 모듈 (3레벨 상 모듈)', q: (d) => d.ns * 3 * d.ppar,
+      spec: (d) => `1,200 V / 1,400 A · ANPC · 상당 ${d.ppar}병렬`, short: (d) => `${d.ns * 3 * d.ppar}개 · 1,200 V`,
+      desc: '한 상의 3레벨(ANPC) 스위치를 담은 모듈입니다. 3레벨이라 소자 하나가 DC 전압의 절반(약 750 V)만 견디면 되므로, 1,500 V 시스템에 1,200 V 소자를 쓸 수 있습니다.' },
+    { id: 'gdu', lv: 'sm', cat: 'ctrl', name: '게이트 드라이브', q: (d) => d.ns * 3 * d.ppar,
+      spec: () => '모듈당 1 · 단락 감지', short: () => '모듈당 1',
+      desc: '제어기의 PWM 신호를 받아 IGBT를 켜고 끕니다. 3레벨은 켜고 끄는 순서가 정해져 있어, 순서가 틀리면 소자가 전압을 두 배로 받습니다.' },
+    { id: 'plate', lv: 'sm', cat: 'cool', name: '수냉 콜드플레이트', q: (d) => d.ns,
+      spec: () => '글리콜 수냉 · 전력 유닛당 1', short: () => '글리콜 수냉',
+      desc: 'IGBT 모듈 손실 열을 냉각액으로 빼냅니다. 열은 함체 위 열교환기에서 외기로 나갑니다.' },
+    { id: 'ct', lv: 'sm', cat: 'ctrl', name: '전류 센서', q: (d) => 3 * d.ns,
+      spec: () => '홀 효과 · 상 전류', short: () => '홀 효과 CT',
+      desc: '전력 유닛의 상 전류를 재서 전류 제어와 병렬 유닛 간 전류 분담, 과전류 보호에 씁니다.' },
+    { id: 'lcl', lv: 'sm', cat: 'mag', name: 'LCL 필터 인덕터', q: (d) => d.ns,
+      spec: (d) => `≈ ${fmt(d.L1)} µH · 3상 철심 · ${fmt(d.Iunit)} A`, short: (d) => `${fmt(d.L1)} µH × ${d.ns}`,
+      desc: '스위칭 리플을 걸러 계통에 사인파 전류를 보냅니다. 인버터측 L과 AC 커패시터 C, 변압기 누설 인덕턴스가 LCL 필터를 이룹니다. 함체에서 가장 무거운 부품입니다.' },
+    { id: 'accap', lv: 'sm', cat: 'pas', name: 'AC 필터 커패시터', q: () => 1,
+      spec: (d) => `≈ ${fmt(d.Cf)} µF/상 (Y 등가) · 3상 1조`, short: (d) => `${fmt(d.Cf)} µF/상`,
+      desc: 'LCL 필터의 C입니다. 스위칭 주파수 성분을 흡수해 계통으로 새어 나가는 고조파를 줄입니다.' },
+    { id: 'accb', lv: 'sm', cat: 'prot', name: 'AC 차단기', q: () => 1,
+      spec: (d) => `${fmt(d.Iac)} A · 690 V급 기중차단기`, short: (d) => `${fmt(d.Iac)} A ACB`,
+      desc: '인버터 출력을 MV 변압기 저압 권선에서 분리합니다. 계통 고장 때 인버터를 보호합니다.' },
+    { id: 'ctl', lv: 'sm', cat: 'ctrl', name: '인버터 제어기', q: () => 1,
+      spec: () => 'MPPT · 계통연계 · 절연 감시(IMD)', short: () => 'MPPT · 계통연계',
+      desc: '어레이에서 최대 전력을 뽑도록 DC 전압을 찾아가고(MPPT), 계통 전압에 맞춰 전류를 넣습니다. 비접지 어레이의 절연 저항도 감시합니다.' },
+    { id: 'aux', lv: 'sm', cat: 'ctrl', name: '보조 전원 · UPS', q: () => 1,
+      spec: () => '제어·통신 전원 · 정전 시 유지', short: () => 'UPS',
+      desc: '제어기와 통신 장치에 전원을 공급하고, 계통 정전 때에도 상태 기록과 통신을 유지합니다.' },
+    { id: 'fan', lv: 'sm', cat: 'cool', name: '열교환기 팬', q: (d) => 2 * d.ns,
+      spec: () => '함체 상부 · 외기 방열', short: (d) => `× ${2 * d.ns}`,
+      desc: '냉각액과 함체 내부 공기의 열을 외기로 내보냅니다. 여름 한낮 출력 제한(디레이팅)을 막는 부품입니다.' },
+
+    { id: 'inv', lv: 'arm', cat: 'semi', name: '센트럴 인버터', q: () => PV.FIXED.invBlock,
+      spec: (d) => `${fmt(d.in.Sinv)} kVA · 1,500 V DC → ${PV.FIXED.Vac} V AC`, short: (d) => `${fmt(d.in.Sinv)} kVA`,
+      desc: '스트링 수백 개의 직류를 모아 3상 교류로 바꿉니다. 블록마다 두 대가 MV 변압기 하나를 나눠 씁니다.' },
+    { id: 'mvt', lv: 'arm', cat: 'mag', name: 'MV 변압기 (3권선)', q: () => 1,
+      spec: (d) => `${fmt(d.Smv, 1)} MVA · ${PV.FIXED.mvKV}/0.63/0.63 kV · 유입식`, short: (d) => `${fmt(d.Smv, 1)} MVA`,
+      desc: '인버터 두 대의 저압 출력을 각각 받는 저압 권선 두 개와 22.9 kV 고압 권선 하나로 된 변압기입니다. 두 인버터를 서로 절연하고, 누설 인덕턴스는 LCL 필터의 계통측 L 역할을 합니다.' },
+    { id: 'rmu', lv: 'arm', cat: 'prot', name: 'MV 개폐기 (RMU)', q: () => 1,
+      spec: () => `${PV.FIXED.mvKV} kV · 인입·인출 + 변압기 보호`, short: () => `${PV.FIXED.mvKV} kV RMU`,
+      desc: '블록들을 루프로 잇는 22.9 kV 집전 선로의 인입·인출 단로기와 변압기 보호 차단기를 한 함에 담은 링 메인 유닛입니다.' },
+    { id: 'auxt', lv: 'arm', cat: 'mag', name: '보조 변압기', q: () => 1,
+      spec: () => '630 V / 380 V · 스테이션 전원', short: () => '스테이션 전원',
+      desc: '팬, 조명, 통신, 감시 장치에 쓰는 저압 전원을 만듭니다.' },
+    { id: 'skid', lv: 'arm', cat: 'struct', name: '스테이션 스키드', q: () => 1,
+      spec: () => '인버터 2 · 변압기 · RMU 일체 · 기초 포함', short: () => '일체형 스키드',
+      desc: '인버터, 변압기, RMU를 공장에서 한 철골 스키드에 조립해 현장에 통째로 놓습니다. 기름 유출 방지 오일 피트를 포함합니다.' },
+    { id: 'module', lv: 'arm', cat: 'pv', name: 'PV 모듈', q: (d) => PV.FIXED.invBlock * d.modInv,
+      spec: (d) => `${fmt(d.in.Pmod)} Wp · 양면형 · V_oc ${fmt(d.in.Voc, 1)} V`, short: (d) => `${fmt(d.in.Pmod)} Wp`,
+      desc: `햇빛을 직류로 바꾸는 모듈입니다. 스트링 하나에 직렬로 이어 붙이는 장수는 겨울철 가장 추울 때의 개방전압이 1,500 V를 넘지 않도록 정합니다.` },
+    { id: 'table', lv: 'arm', cat: 'struct', name: '고정식 구조물 (2P)', q: (d) => d.tables,
+      spec: (d) => `세로 2단 · 테이블당 ${2 * d.Ns}장 (2 스트링)`, short: (d) => `${fmt(d.tables)}대`,
+      desc: '모듈을 남향 경사로 받치는 강재 구조물입니다. 앞줄 그림자가 뒷줄을 가리지 않도록 행 간격을 둡니다.' },
+    { id: 'sfuse', lv: 'arm', cat: 'prot', name: '스트링 퓨즈', q: (d) => PV.FIXED.invBlock * d.strInv * 2,
+      spec: () => '1,500 V gPV · 스트링당 + · −', short: () => '스트링당 2',
+      desc: '스트링 하나가 단락되면 병렬로 이어진 다른 스트링들의 역전류가 몰립니다. 이를 끊기 위해 스트링마다 퓨즈를 둡니다.' },
+    { id: 'comb', lv: 'arm', cat: 'prot', name: '접속반', q: (d) => PV.FIXED.invBlock * d.combInv,
+      spec: () => `${PV.FIXED.strComb} 스트링 입력 · 퓨즈 · SPD · 감시`, short: () => `${PV.FIXED.strComb} 스트링`,
+      desc: '스트링 24개를 모아 한 회로로 합칩니다. 스트링 퓨즈와 서지보호기, 스트링 전류 감시 장치가 들어 있습니다.' },
+    { id: 'dcfeeder', lv: 'arm', cat: 'cond', name: 'DC 주간선', q: (d) => PV.FIXED.invBlock * d.combInv,
+      spec: () => '접속반 → 인버터 · 1,500 V · 지중 트렌치', short: () => '1,500 V 지중',
+      desc: '접속반에서 인버터 DC 입력까지 가는 굵은 케이블입니다. 전압 강하를 1–2 % 안에 두도록 굵기를 정합니다.' },
+
+    { id: 'sub', lv: 'st', cat: 'mag', name: '주변압기', q: () => 1,
+      spec: (d) => `${fmt(d.Smain)} MVA · ${PV.FIXED.gridKV}/${PV.FIXED.mvKV} kV`, short: (d) => `${fmt(d.Smain)} MVA`,
+      desc: '22.9 kV 집전 선로를 모아 154 kV 계통으로 올립니다.' },
+    { id: 'gis', lv: 'st', cat: 'prot', name: `${PV.FIXED.gridKV} kV 개폐장치`, q: () => 1,
+      spec: () => 'GIS · 차단기 · 계량', short: () => 'GIS',
+      desc: '발전소를 계통에 연결하고 분리합니다. 거래용 계량 설비를 포함합니다.' },
+    { id: 'mvsg', lv: 'st', cat: 'prot', name: `${PV.FIXED.mvKV} kV 배전반`, q: () => 1,
+      spec: (d) => `집전 피더 ${d.feeders}회로 + 인입 · 보호`, short: (d) => `피더 ${d.feeders}`,
+      desc: '블록 루프(피더)를 모으고, 피더마다 차단기와 보호 계전기를 둡니다.' },
+    { id: 'mvcable', lv: 'st', cat: 'cond', name: 'MV 집전 선로', q: (d) => d.feeders,
+      spec: () => `${PV.FIXED.mvKV} kV · 루프당 블록 ${PV.FIXED.blocksPerFeeder}개`, short: () => '22.9 kV 루프',
+      desc: '블록의 RMU들을 차례로 이어 주변압기 쪽 배전반으로 가는 22.9 kV 지중 케이블입니다.' },
+    { id: 'ppc', lv: 'st', cat: 'ctrl', name: '발전소 제어기 (PPC) · SCADA', q: () => 1,
+      spec: () => '출력·전압·주파수 제어 · 감시', short: () => 'PPC',
+      desc: '계통 운영자의 지령에 맞춰 발전소 전체의 유효·무효전력을 나눠 인버터에 내립니다.' },
+    { id: 'met', lv: 'st', cat: 'ctrl', name: '기상 관측소', q: () => 2,
+      spec: () => '일사계 · 모듈 온도 · 풍속', short: () => '일사계',
+      desc: '일사량과 온도를 재서 발전 성능(PR)을 평가합니다.' },
+  ];
+  PV.BOM_BY_ID = Object.fromEntries(PV.BOM.map((b) => [b.id, b]));
+  PV.LEVELS = { sm: '센트럴 인버터 (1대)', arm: '블록 (인버터 스테이션 + 어레이)', st: '발전소 설비' };
+
+  PV.qty = function (b, d) {
+    const q = b.q(d);
+    if (b.lv === 'sm') return { sm: q, arm: q * PV.FIXED.invBlock, st: q * d.invTot };
+    if (b.lv === 'arm') return { sm: null, arm: q, st: q * d.blocks };
+    return { sm: null, arm: null, st: q };
+  };
+
+  PV.derivedRows = function (d) {
+    return [
+      [`모듈 V<sub>oc</sub> (${fmt(d.in.Tmin)} °C)`, `${fmt(d.VocMax, 1)} V`],
+      ['스트링 길이', `${d.Ns}장 (1,500 V 이하)`, d.Ns < 10],
+      ['스트링 MPP 전압 (25 °C)', `≈ ${fmt(d.Vmp)} V`],
+      ['인버터당 DC 용량', `${fmt(d.PdcInv, 2)} MWp (${fmt(d.strInv)} 스트링)`],
+      ['인버터당 PV 모듈', `${fmt(d.modInv)}장`],
+      ['인버터 대수', `${fmt(d.invTot)}대 (블록 ${fmt(d.blocks)} × 2)`],
+      ['발전소 DC 용량', `${fmt(d.dcTot, 1)} MWp`],
+      ['인버터 AC 전류', `${fmt(d.Iac)} A`],
+      ['인버터 DC 전류 (MPP)', `${fmt(d.Idc)} A`],
+      ['전력 유닛', `${d.ns} × ${fmt(d.Sunit)} kVA`],
+      ['IGBT 모듈', `1,200 V / 1,400 A · 상당 ${d.ppar}병렬`, d.ppar > 3],
+      ['LCL 인버터측 인덕터', `≈ ${fmt(d.L1)} µH`],
+      ['MV 변압기', `${fmt(d.Smv, 1)} MVA × ${fmt(d.blocks)}`],
+      ['주변압기', `${fmt(d.Smain)} MVA`],
+      ['연간 발전량 (추정)', `≈ ${fmt(d.energy)} GWh`],
+    ];
+  };
+
+  PV.ASSUME = [
+    '블록 = 센트럴 인버터 2대 + 3권선 MV 변압기 + RMU를 한 스키드에 올린 스테이션과 그 어레이',
+    `DC 최대 ${fmt(PV.FIXED.Vdcmax)} V, 모듈 V<sub>oc</sub> 온도계수 −0.25 %/°C, V<sub>mp</sub> ≈ 0.835 × V<sub>oc</sub>`,
+    '인버터 대수 = ⌈P / (0.95 × S)⌉를 블록(2대) 단위로 올림 (역률 0.95에서 정격 유효전력)',
+    `접속반 ${PV.FIXED.strComb} 스트링, 스트링 퓨즈 +·− 양극, 테이블당 2 스트링 (세로 2단)`,
+    `전력 유닛 1개 ≈ ${fmt(PV.FIXED.unitKVA)} kVA, 3레벨 ANPC (1,200 V · 1,400 A 모듈, 1.5 × 피크 전류), 스위칭 3 kHz, 리플 20 %`,
+    'AC 필터 커패시터 5 % (Y 등가), DC 링크 3 mF/MVA, MV 집전 루프당 블록 4개',
+    `연간 발전량은 비발전량 ${fmt(PV.FIXED.yield)} kWh/kWp로 추정 (국내 고정식 평균 수준)`,
+    '케이블 길이, 음영·온도 손실, 계통 연계 기준은 반영하지 않은 개략 산정',
+  ];
+})();
+</script>
+<script>
+/* js/pv-inverter.js */
+// 센트럴 인버터 상세 모델 (단위: m, 앞면(도어) = +z). 폭 2.8 × 높이 2.3 × 깊이 1.5
+// 왼쪽 DC 입력부 → 가운데 전력 유닛(3레벨) → 오른쪽 LCL 필터 · AC 차단기 · 제어기
+(function () {
+  const PV = window.PV, U = KIT.u;
+  PV.INV_LABEL_ORDER = ['cab', 'dcfuse', 'dcsw', 'spd', 'dclink', 'bus', 'igbt', 'gdu', 'plate', 'ct', 'lcl', 'accap', 'accb', 'ctl', 'aux', 'fan'];
+
+  PV.buildInverter = function (M, d) {
+    const ns = Math.min(4, Math.max(1, d.ns)), pp = Math.min(3, Math.max(1, d.ppar)), nc = Math.min(12, d.combInv);
+    const A = KIT.assembly(M);
+    const G = () => new THREE.Group();
+    let g;
+
+    // 함체: 바닥(분해 기준) · 뒤판 · 옆판 · 지붕 · 도어 2
+    g = G(); g.add(U.box(2.8, 0.12, 1.5, M.alDark, 0, 0.06, 0));
+    A.piece('cab', g, [0, 0, 0], 0);
+    g = G(); g.add(U.box(2.8, 2.2, 0.03, M.bldg, 0, 1.22, -0.735));
+    A.piece('cab', g, [0, 0, -1.1], 0, { ghost: 0.18 });
+    for (const s of [-1, 1]) {
+      g = G(); g.add(U.box(0.03, 2.2, 1.5, M.bldg, s * 1.385, 1.22, 0));
+      for (let i = 0; i < 5; i++) g.add(U.box(0.012, 0.03, 0.9, M.alDark, s * 1.405, 0.5 + i * 0.08, 0));
+      A.piece('cab', g, [s * 1.22, 0, 0], 0, { labelHere: s < 0, ghost: 0.18 });
+    }
+    g = G(); g.add(U.box(2.86, 0.05, 1.56, M.bldg, 0, 2.345, 0));
+    A.piece('cab', g, [0, 1.5, 0], 0.02, { ghost: 0.3 });
+    for (const s of [-1, 1]) {
+      g = G();
+      g.add(U.box(1.39, 2.2, 0.03, M.bldg, s * 0.7, 1.22, 0.735));
+      g.add(U.cyl(0.015, 0.015, 0.25, M.alDark, s * 0.12, 1.25, 0.77, null, 10));
+      for (let i = 0; i < 6; i++) g.add(U.box(0.9, 0.025, 0.012, M.alDark, s * 0.7, 0.35 + i * 0.07, 0.755));
+      A.piece('cab', g, [s * 0.9, 0, 1.3], 0.03, { ghost: 0.18 });
+    }
+
+    // DC 입력 퓨즈 (입력 회로 × +·−)
+    g = G();
+    g.add(U.box(0.66, 1.3, 0.02, M.film, -1.0, 1.35, -0.64));
+    for (let r = 0; r < nc; r++) for (const x of [-1.17, -0.83]) {
+      const y = nc > 1 ? 0.85 + (r * 1.1) / (nc - 1) : 1.4;
+      g.add(U.box(0.13, 0.08, 0.1, M.ceramic, x, y, -0.57));
+      g.add(U.cyl(0.02, 0.02, 0.1, M.cond, x, y, -0.51, 'x', 12));
+    }
+    A.piece('dcfuse', g, [-0.75, 0, 0.1], 0.1);
+
+    // DC 부하개폐기 (전력 유닛당 1)
+    for (let k = 0; k < ns; k++) {
+      const x = -1.22 + (ns > 1 ? (k * 0.5) / (ns - 1) : 0.25);
+      g = G();
+      g.add(U.box(0.2, 0.24, 0.22, M.alDark, x, 0.36, 0.25));
+      g.add(U.cyl(0.035, 0.035, 0.05, M.prot, x, 0.38, 0.385, 'z', 16));
+      g.add(U.box(0.1, 0.025, 0.02, M.prot, x, 0.38, 0.42));
+      A.piece('dcsw', g, [-0.6, -0.05, 0.6], 0.12 + k * 0.03, { labelHere: k === 0 });
+    }
+
+    // 서지보호기: DC(왼쪽 위) · AC(오른쪽 위)
+    for (const x of [-1.0, 0.8]) {
+      g = G();
+      g.add(U.box(0.2, 0.13, 0.1, M.film, x, 2.1, -0.6));
+      g.add(U.box(0.04, 0.03, 0.012, M.prot, x, 2.12, -0.545));
+      A.piece('spd', g, [0, 0.95, 0], 0.08, { labelHere: x < 0 });
+    }
+
+    // 전력 유닛 ns개 (아래 → 위). 각 유닛: 콜드플레이트 · 상 모듈 · 게이트 드라이브 · DC 링크(P/N) · 버스바 · CT
+    const hu = 2.0 / ns;
+    for (let k = 0; k < ns; k++) {
+      const yb = 0.18 + k * hu, top = k === ns - 1, dl = 0.18 + k * 0.05;
+      const canH = Math.min(0.3, hu - 0.16);
+      g = G();
+      g.add(U.box(1.1, 0.04, 0.5, M.al, 0, yb + 0.03, 0.2));
+      for (const dz of [0.05, 0.35]) g.add(U.cyl(0.014, 0.014, 0.08, M.cool, -0.59, yb + 0.03, dz, 'x', 10));
+      A.piece('plate', g, [0, 0, 0.9], dl, { labelHere: top });
+      const m = 3 * pp, sp = 1.0 / m;
+      for (let i = 0; i < m; i++) {
+        const x = -0.5 + (i + 0.5) * sp, ph = 'ABC'[Math.floor(i / pp)];
+        g = G();
+        g.add(U.box(Math.min(0.13, sp - 0.02), 0.035, 0.2, M.semi, x, yb + 0.068, 0.2));
+        for (const dz of [-0.06, 0, 0.06]) g.add(U.cyl(0.01, 0.01, 0.012, M.cond, x, yb + 0.091, 0.2 + dz, null, 10));
+        A.piece('igbt', g, [0, 0.14, 0.9], dl + 0.02, { role: ph, labelHere: top && i === 0 });
+        g = G();
+        g.add(U.box(Math.min(0.12, sp - 0.03), 0.006, 0.16, M.ctrl, x, yb + 0.13, 0.2));
+        g.add(U.box(0.03, 0.01, 0.03, M.chip, x, yb + 0.138, 0.18));
+        A.piece('gdu', g, [0, 0.3, 0.9], dl + 0.05, { labelHere: top && i === 0 });
+      }
+      for (const [row, z] of [['P', -0.25], ['N', -0.4]]) {
+        g = G();
+        for (let i = 0; i < 6; i++) g.add(U.cyl(0.055, 0.055, canH, M.pas, -0.45 + i * 0.18, yb + 0.03 + canH / 2, z, null, 20));
+        A.piece('dclink', g, [0, 0, 0.45], dl, { role: row, labelHere: top && row === 'P' });
+      }
+      const bh = Math.max(0.12, canH), by = yb + 0.03 + bh / 2;
+      g = G();
+      g.add(U.box(1.05, bh, 0.008, M.cond, 0, by, -0.16));
+      g.add(U.box(1.04, bh - 0.01, 0.006, M.film, 0, by, -0.152));
+      g.add(U.box(1.03, bh - 0.02, 0.008, M.cond, 0, by, -0.144));
+      g.add(U.box(1.0, 0.006, 0.26, M.cond, 0, yb + 0.1, -0.02));
+      A.piece('bus', g, [0, 0, 0.62], dl, { labelHere: top });
+      g = G();
+      for (const dz of [0.1, 0.2, 0.3]) {
+        g.add(U.box(0.16, 0.012, 0.03, M.cond, 0.6, yb + 0.07, dz));
+        const r = U.mesh(new THREE.TorusGeometry(0.03, 0.012, 8, 20), M.chip, 0.6, yb + 0.07, dz);
+        r.rotation.y = Math.PI / 2; g.add(r);
+      }
+      A.piece('ct', g, [0.3, 0, 0.9], dl + 0.04, { labelHere: top });
+    }
+
+    // LCL 필터 인덕터 (3상 철심, 유닛당 1조) — 아래쪽
+    for (let k = 0; k < ns; k++) {
+      const z = ns === 1 ? 0 : -0.5 + (k * 1.0) / (ns - 1);
+      g = G();
+      for (const y of [0.2, 0.64]) g.add(U.box(0.56, 0.07, 0.14, M.alDark, 1.02, y, z));
+      for (const x of [0.82, 1.02, 1.22]) {
+        g.add(U.box(0.07, 0.38, 0.1, M.alDark, x, 0.42, z));
+        g.add(U.cyl(0.07, 0.07, 0.3, M.cond, x, 0.42, z, null, 20));
+      }
+      A.piece('lcl', g, [0.65, 0, (k - (ns - 1) / 2) * 0.12], 0.2 + k * 0.04, { labelHere: k === ns - 1 });
+    }
+
+    // AC 필터 커패시터 · AC 차단기 · 제어기 · UPS · 열교환기 팬
+    g = G();
+    for (const z of [-0.3, 0, 0.3]) g.add(U.cyl(0.07, 0.07, 0.26, M.pas, 1.0, 0.95, z, null, 20));
+    A.piece('accap', g, [0.6, 0.35, 0.1], 0.26);
+    g = G();
+    g.add(U.box(0.5, 0.42, 0.42, M.alDark, 1.02, 1.42, 0.05));
+    g.add(U.box(0.34, 0.26, 0.01, M.film, 1.02, 1.42, 0.265));
+    g.add(U.box(0.08, 0.04, 0.03, M.prot, 1.02, 1.36, 0.28));
+    for (const dx of [-0.1, 0, 0.1]) g.add(U.box(0.06, 0.1, 0.03, M.cond, 1.02 + dx, 1.68, -0.05));
+    A.piece('accb', g, [0.75, 0.3, 0.45], 0.28);
+    g = G();
+    g.add(U.box(0.42, 0.34, 0.14, M.alDark, 0.98, 1.95, 0.45));
+    g.add(U.box(0.36, 0.28, 0.006, M.ctrl, 0.98, 1.95, 0.523));
+    g.add(U.box(0.12, 0.07, 0.008, M.chip, 0.9, 2.02, 0.528));
+    g.add(U.box(0.02, 0.2, 0.02, M.fiber, 1.12, 1.95, 0.53));
+    A.piece('ctl', g, [0.45, 0.55, 1.2], 0.34);
+    g = G();
+    g.add(U.box(0.32, 0.22, 0.32, M.alDark, 1.05, 1.95, -0.4));
+    g.add(U.box(0.2, 0.02, 0.006, M.ctrl, 1.05, 2.0, -0.237));
+    A.piece('aux', g, [0.8, 0.75, -0.35], 0.32);
+    g = G();
+    for (let i = 0; i < 2 * ns; i++) {
+      const x = ns === 1 ? 0 : -0.95 + (Math.floor(i / 2) * 1.9) / (ns - 1), z = i % 2 ? 0.35 : -0.35;
+      g.add(U.cyl(0.2, 0.2, 0.08, M.fan, x, 2.41, z, null, 24));
+      const r = U.mesh(new THREE.TorusGeometry(0.21, 0.015, 6, 28), M.al, x, 2.455, z);
+      r.rotation.x = Math.PI / 2; g.add(r);
+    }
+    A.piece('fan', g, [0, 1.95, 0], 0.03);
+
+    return A.finish('cab');
+  };
+})();
+</script>
+<script>
+/* js/pv-plant.js */
+// 태양광 발전 블록 + 인버터 스테이션 (단위: m). x = 동, z = 남, y = 위. 모듈은 남향(+z) 30° 고정식 2P
+(function () {
+  const PV = window.PV, U = KIT.u;
+  const MOD = { w: 1.303, h: 2.384, gap: 0.02 }, TILT = (30 * Math.PI) / 180, GCR = 0.45;
+  const SX = 10.5; // 스테이션 중심 x
+  const texCache = {};
+
+  // 테이블 윗면: 모듈 Ns × 2장 격자를 캔버스로 그린 텍스처
+  function panelTexture(Ns) {
+    if (texCache[Ns]) return texCache[Ns];
+    const cw = 1024, ch = 128, c = document.createElement('canvas');
+    c.width = cw; c.height = ch;
+    const g = c.getContext('2d');
+    g.fillStyle = '#c9d1d8'; g.fillRect(0, 0, cw, ch);
+    const mw = cw / Ns, mh = ch / 2;
+    g.lineWidth = 1;
+    for (let i = 0; i < Ns; i++) for (let j = 0; j < 2; j++) {
+      const x = i * mw + 1, y = j * mh + 1, w = mw - 2, h = mh - 2;
+      g.fillStyle = '#1b2a45'; g.fillRect(x, y, w, h);
+      g.strokeStyle = 'rgba(130,160,200,0.35)';
+      for (let k = 1; k < 3; k++) { g.beginPath(); g.moveTo(x + (w * k) / 3, y); g.lineTo(x + (w * k) / 3, y + h); g.stroke(); }
+      for (let k = 1; k < 6; k++) { g.beginPath(); g.moveTo(x, y + (h * k) / 6); g.lineTo(x + w, y + (h * k) / 6); g.stroke(); }
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.encoding = THREE.sRGBEncoding; t.anisotropy = 8;
+    return (texCache[Ns] = t);
+  }
+
+  PV.buildStation = function (d, M) {
+    const root = new THREE.Group(), parts = {}, anchors = {};
+    const V = (x, y, z) => new THREE.Vector3(x, y, z);
+    const G = () => new THREE.Group();
+    function tag(obj, id, edges) {
+      U.own(obj);
+      if (edges) U.edges(obj, M.edge, 30);
+      obj.traverse((o) => { if (o.isMesh) o.userData.part = id; });
+      (parts[id] = parts[id] || []).push(obj);
+      root.add(obj);
+      return obj;
+    }
+
+    // ---------- 어레이 배치: 스테이션 패드를 비우고 가운데부터 채움 ----------
+    const Ns = d.Ns, T = d.tables;
+    const W = Ns * (MOD.w + MOD.gap), slope = 2 * MOD.h + MOD.gap;
+    const pitch = slope / GCR, rise = slope * Math.sin(TILT), run = slope * Math.cos(TILT), y0 = 0.7;
+    const roadHalf = 4, gapX = 1.2, perSide = 4;
+    const PAD = { x0: 3, x1: 18.5, z0: -11, z1: 11 };
+    const all = [], rows = Math.ceil(T / (2 * perSide)) + 4;
+    for (let r = 0; r < rows; r++) {
+      const z = (r - (rows - 1) / 2) * pitch;
+      for (let k = 0; k < perSide; k++) for (const s of [-1, 1]) {
+        const x = s * (roadHalf + gapX / 2 + W / 2 + k * (W + gapX));
+        const hit = x + W / 2 > PAD.x0 && x - W / 2 < PAD.x1 && z + run / 2 > PAD.z0 && z - run / 2 < PAD.z1;
+        if (!hit) all.push({ x, z, key: Math.abs(z) + Math.abs(x) * 0.001 });
+      }
+    }
+    all.sort((a, b) => a.key - b.key);
+    const slots = all.slice(0, T);
+    const zmin = Math.min(...slots.map((s) => s.z)) - run, zmax = Math.max(...slots.map((s) => s.z)) + run;
+    const xmax = Math.max(...slots.map((s) => Math.abs(s.x))) + W / 2;
+
+    const dm = new THREE.Object3D();
+    const panelMat = new THREE.MeshStandardMaterial({ map: panelTexture(Ns), roughness: 0.32, metalness: 0.25 });
+    const panels = U.inst(new THREE.BoxGeometry(W, 0.045, slope), panelMat, T, 'module', []);
+    const nP = Math.ceil(W / 5) + 1;
+    const hF = y0 + 0.05, hR = y0 + rise - 0.25;
+    const fp = U.inst(new THREE.BoxGeometry(0.09, hF, 0.09), M.al, T * nP, 'table', []);
+    const rp = U.inst(new THREE.BoxGeometry(0.09, hR, 0.09), M.al, T * nP, 'table', []);
+    slots.forEach((s, i) => {
+      dm.position.set(s.x, y0 + rise / 2, s.z); dm.rotation.set(TILT, 0, 0); dm.updateMatrix();
+      panels.setMatrixAt(i, dm.matrix);
+      dm.rotation.set(0, 0, 0);
+      for (let k = 0; k < nP; k++) {
+        const x = s.x - W / 2 + 0.3 + (k * (W - 0.6)) / (nP - 1);
+        dm.position.set(x, hF / 2, s.z + run / 2 - 0.35); dm.updateMatrix(); fp.setMatrixAt(i * nP + k, dm.matrix);
+        dm.position.set(x, hR / 2, s.z - run / 2 + 0.35); dm.updateMatrix(); rp.setMatrixAt(i * nP + k, dm.matrix);
+      }
+    });
+    const pg = G(); pg.add(panels); tag(pg, 'module');
+    const tg = G(); tg.add(fp, rp); tag(tg, 'table');
+    const near = slots.reduce((b, s) => (Math.hypot(s.x - 30, s.z - 26) < Math.hypot(b.x - 30, b.z - 26) ? s : b), slots[0]);
+    anchors.module = V(near.x - W / 4, y0 + rise * 0.75, near.z - run / 4);
+    anchors.table = V(near.x - W / 2 + 0.3, hR * 0.6, near.z - run / 2 + 0.35);
+
+    // 도로 · DC 트렌치 · 접속반
+    root.add(U.box(2 * roadHalf - 1.4, 0.03, zmax - zmin + 16, M.concrete, 0, 0.015, (zmin + zmax) / 2));
+    const tr = G();
+    for (const s of [-1, 1]) tr.add(U.box(0.7, 0.04, zmax - zmin, M.fan, s * (roadHalf - 0.9), 0.03, (zmin + zmax) / 2));
+    tr.add(U.box(SX + 3.1, 0.04, 0.7, M.fan, (SX - 3.1) / 2, 0.03, -6.5));
+    tr.add(U.box(SX - 3.1, 0.04, 0.7, M.fan, (SX + 3.1) / 2, 0.03, 6.5));
+    tag(tr, 'dcfeeder');
+    anchors.dcfeeder = V(roadHalf - 0.9, 0.1, Math.min(zmax - 20, 40));
+    const cb = G();
+    const nc = d.combInv;
+    let combNear = null;
+    for (const s of [-1, 1]) for (let k = 0; k < nc; k++) {
+      const z = zmin + ((k + 0.5) * (zmax - zmin)) / nc, x = s * (roadHalf + 0.5);
+      cb.add(U.box(0.1, 1.0, 0.1, M.al, x, 0.5, z));
+      cb.add(U.box(0.3, 0.9, 0.75, M.bldg, x, 1.3, z));
+      cb.add(U.box(0.012, 0.1, 0.2, M.prot, x + s * 0.156, 1.55, z));
+      if (s > 0 && (!combNear || Math.abs(z - 20) < Math.abs(combNear - 20))) combNear = z;
+    }
+    tag(cb, 'comb', true);
+    anchors.comb = V(roadHalf + 0.5, 1.75, combNear);
+
+    // ---------- 인버터 스테이션 (스키드) ----------
+    root.add(U.box(15, 0.2, 22, M.concrete, SX, 0.1, 0));
+    const sk = G();
+    sk.add(U.box(2.8, 0.3, 13.6, M.alDark, SX, 0.35, 0));
+    tag(sk, 'skid', true);
+    anchors.skid = V(SX + 1.4, 0.5, 6.8);
+    const groups = [];
+    for (const [key, name, z] of [['INV1', '인버터 1', -4.9], ['INV2', '인버터 2', 4.9]]) {
+      const inv = G();
+      inv.add(U.box(1.5, 2.3, 2.8, M.bldg, SX, 1.65, z));
+      inv.add(U.box(0.012, 2.1, 0.012, M.alDark, SX + 0.757, 1.65, z));
+      for (const dz of [-0.12, 0.12]) inv.add(U.cyl(0.012, 0.012, 0.22, M.alDark, SX + 0.77, 1.7, z + dz, null, 8));
+      for (let i = 0; i < 5; i++) inv.add(U.box(0.012, 0.025, 2.2, M.alDark, SX + 0.758, 0.8 + i * 0.07, z));
+      for (const dz of [-0.9, 0, 0.9]) for (const dx of [-0.35, 0.35]) inv.add(U.cyl(0.18, 0.18, 0.07, M.fan, SX + dx, 2.84, z + dz, null, 20));
+      tag(inv, 'inv', true);
+      groups.push({ key, name, anchor: V(SX, 3.0, z) });
+    }
+    const mv = G();
+    mv.add(U.box(1.7, 1.9, 2.4, M.mag, SX, 1.45, 0));
+    for (const s of [-1, 1]) for (let i = 0; i < 6; i++) mv.add(U.box(0.32, 1.5, 0.04, M.mag, SX + s * 1.01, 1.35, -0.9 + i * 0.36));
+    for (const dz of [-0.4, 0, 0.4]) mv.add(U.cyl(0.05, 0.08, 0.35, M.porcelain, SX + 0.4, 2.57, -0.9 + dz, null, 10));
+    for (const s of [-1, 1]) mv.add(U.box(0.45, 0.3, 2.3, M.bldg, SX - 0.3, 2.55, s * 2.35));
+    tag(mv, 'mvt', true);
+    anchors.mvt = V(SX, 2.5, 0);
+    const rmu = G();
+    rmu.add(U.box(1.0, 1.7, 0.9, M.bldg, SX + 0.2, 1.35, -2.35));
+    rmu.add(U.box(0.012, 0.5, 0.6, M.alDark, SX + 0.706, 1.6, -2.35));
+    tag(rmu, 'rmu', true);
+    anchors.rmu = V(SX + 0.2, 2.25, -2.35);
+    const ax = G();
+    ax.add(U.box(0.8, 1.0, 0.8, M.mag, SX + 0.3, 1.0, 2.35));
+    for (const dz of [-0.2, 0.2]) ax.add(U.cyl(0.04, 0.06, 0.2, M.porcelain, SX + 0.3, 1.6, 2.35 + dz, null, 8));
+    tag(ax, 'auxt', true);
+    anchors.auxt = V(SX + 0.3, 1.55, 2.35);
+    const mvc = G();
+    mvc.add(U.box(SX + 2.2, 0.04, 0.6, M.fan, (SX - 2.2) / 2, 0.035, -2.35));
+    mvc.add(U.box(0.6, 0.04, Math.abs(zmin) - 2.35, M.fan, -2.2, 0.035, (zmin - 2.35) / 2));
+    tag(mvc, 'mvcable');
+    anchors.mvcable = V(-2.2, 0.1, Math.max(zmin + 20, -60));
+
+    const focus = { pos: V(SX, 1.65, -4.9), front: SX + 0.75 };
+    const glowBox = U.noPick(new THREE.Mesh(new THREE.BoxGeometry(1.62, 2.42, 2.92), M.glow.clone()));
+    glowBox.position.copy(focus.pos); glowBox.visible = false;
+    root.add(glowBox);
+
+    const pickList = [];
+    root.traverse((o) => { if (o.isMesh && o.userData.part) pickList.push(o); });
+    return { root, parts, anchors, groups, focus, glowBox, pickList, skidX: SX, span: Math.max(xmax, zmax, -zmin) };
+  };
+})();
+</script>
+<script>
+/* js/pv.js */
+// 태양광 인버터 해부도 투어 설정 (엔진: js/engine.js)
+(function () {
+  const PV = window.PV, U = KIT.u, fmt = PV.fmt;
+  const ARRAY_IDS = ['module', 'table', 'comb', 'dcfeeder', 'sfuse', 'mvcable'];
+  const STATION_IDS = ['inv', 'mvt', 'rmu', 'auxt', 'skid'];
+
+  ANATOMY.run({
+    design: PV,
+    buildStation: PV.buildStation,
+    buildDetail: (M, d) => PV.buildInverter(M, d),
+    detailKey: (d) => `${d.ns}|${d.ppar}|${Math.min(12, d.combInv)}`,
+    detailLabelOrder: PV.INV_LABEL_ORDER,
+    groupPart: 'inv',
+    groupSub: (d) => `${fmt(d.in.Sinv)} kVA · ${fmt(d.PdcInv, 2)} MWp`,
+    columns: ['인버터당', '블록당', '발전소'],
+    scope: null,
+    kpis: (d) => [['PV 모듈', d.modInv * d.invTot], ['스트링', d.strInv * d.invTot], ['접속반', d.combInv * d.invTot], ['인버터', d.invTot]],
+    header: (d) => ({
+      subtitle: `${fmt(d.in.P)} MW(AC) · ${fmt(d.dcTot, 1)} MWp(DC) · 1,500 V · 센트럴 인버터 ${fmt(d.in.Sinv / 1000, 1)} MVA × ${fmt(d.invTot)}대 · ${PV.FIXED.mvKV} kV 집전`,
+      tabs: {},
+    }),
+
+    T_END: 68,
+    SWITCH: [32, 65],
+    towerWindow: [18, 32],
+    CH: [
+      { k: '01 · 발전 블록', s: '블록', t0: 0, t1: 10, lv: 'station', title: () => '태양광 발전 블록',
+        text: (d) => `${fmt(d.in.P)} MW 발전소를 이루는 블록 ${fmt(d.blocks)}개 중 하나입니다. PV 모듈 ${fmt(2 * d.modInv)}장이 스트링으로 묶여 접속반을 거쳐 가운데 인버터 스테이션으로 모입니다.` },
+      { k: '02 · 어레이', s: '어레이', t0: 10, t1: 18, lv: 'station', title: () => '스트링과 접속반',
+        text: (d) => `모듈 ${d.Ns}장을 직렬로 이어 한 스트링을 만듭니다. ${fmt(d.in.Tmin)} °C에서 개방전압 ${fmt(d.VocMax * d.Ns)} V로 1,500 V를 넘지 않는 최대 장수입니다. 스트링 ${PV.FIXED.strComb}개가 접속반 하나에 모입니다.` },
+      { k: '03 · 인버터 스테이션', s: '스테이션', t0: 18, t1: 28, lv: 'tower', title: () => '인버터 스테이션',
+        text: (d) => `센트럴 인버터 2대가 ${fmt(d.Smv, 1)} MVA 3권선 변압기 하나를 나눠 쓰고, RMU를 거쳐 ${PV.FIXED.mvKV} kV 집전 선로로 나갑니다.` },
+      { k: '04 · 인버터', s: '인버터', t0: 28, t1: 32, lv: 'tower', title: () => '센트럴 인버터 한 대',
+        text: (d) => `발전소 전체 ${fmt(d.invTot)}대 중 하나입니다. 직류 약 ${fmt(d.Idc)} A를 받아 ${PV.FIXED.Vac} V 교류 ${fmt(d.Iac)} A로 바꿉니다.` },
+      { k: '05 · 분해', s: '분해', t0: 32, t1: 52, lv: 'sm', title: () => '센트럴 인버터 분해',
+        text: (d) => `함체를 열면 전력은 DC 입력 퓨즈·개폐기 → 전력 유닛 ${d.ns}개 → LCL 필터 → AC 차단기 순으로 흐릅니다.` },
+      { k: '06 · 동작', s: '동작', t0: 52, t1: 62, lv: 'sm', usesMode: true, title: () => '3레벨 스위칭 (P · O · N)',
+        text: (d, m) => ({ P: 'P 상태: 출력이 DC+에 붙어 +V_dc/2. ', O: 'O 상태: 클램프 경로로 중성점에 붙어 0. ', N: 'N 상태: 출력이 DC−에 붙어 −V_dc/2. ' }[m] || '') +
+          '세 레벨로 나눠 스위칭하면 소자 하나가 견딜 전압이 절반이 되고, 출력 파형이 매끄러워져 필터가 작아집니다.' },
+      { k: '07 · 복귀', s: '복귀', t0: 62, t1: 68, lv: 'station', title: () => '다시 블록으로',
+        text: () => '모든 수량은 오른쪽 설계 기준에서 계산됩니다. 모듈 출력이나 기온을 바꾸면 스트링 길이와 인버터 대수가 함께 바뀝니다.' },
+    ],
+    explodeAt(t) {
+      if (t < 35) return 0;
+      if (t < 41) return U.smooth((t - 35) / 6);
+      if (t < 52) return 1;
+      if (t < 54) return 1 - 0.4 * U.smooth((t - 52) / 2);
+      if (t < 62) return 0.6;
+      if (t < 64.5) return 0.6 * (1 - U.smooth((t - 62) / 2.5));
+      return 0;
+    },
+    focusGlow(t, now) {
+      if (t >= 28 && t < 32) return 0.2 + 0.18 * (0.5 + 0.5 * Math.sin(now / 160));
+      if (t >= 65 && t < 67) return 0.36 * (1 - (t - 65) / 2);
+      return 0;
+    },
+    opWindow: [52, 62],
+    opGlowFrom: 53,
+    modeAt: (t) => (t < 54 || t >= 62 ? 'P' : ['P', 'O', 'N', 'O'][Math.floor((t - 54) / 2) % 4]),
+    modes: {
+      P: { out: (d) => `v<sub>AO</sub> = +V<sub>dc</sub>/2 ≈ +${fmt(d.Vmp / 2)} V`, glow: [['igbt:A', 0.9], ['dclink:P', 0.8]] },
+      O: { out: () => 'v<sub>AO</sub> = 0 (중성점 클램프)', glow: [['igbt:A', 0.9], ['bus', 0.6]] },
+      N: { out: (d) => `v<sub>AO</sub> = −V<sub>dc</sub>/2 ≈ −${fmt(d.Vmp / 2)} V`, glow: [['igbt:A', 0.9], ['dclink:N', 0.8]] },
+    },
+    labelPlan: [
+      { t0: 0, t1: 10.2, ids: ['module', 'comb', 'dcfeeder', 'skid'] },
+      { t0: 11, t1: 18, ids: ['module', 'table', 'comb', 'dcfeeder'], start: 11.3, step: 0.8 },
+      { t0: 19, t1: 28, ids: ['grp:INV1', 'grp:INV2', 'mvt', 'rmu', 'auxt', 'skid'], start: 19.4, step: 0.7 },
+      { t0: 28, t1: 32, ids: ['grp:INV1'] },
+      { t0: 41.3, t1: 52, ids: PV.INV_LABEL_ORDER, step: 0.6 },
+      { t0: 52, t1: 62, ids: ['igbt', 'dclink', 'bus', 'lcl'] },
+    ],
+    nav(id, b) {
+      if (b.lv === 'sm') return { zone: 'sm', t: 51.5, dist: 5 };
+      if (STATION_IDS.includes(id)) return { zone: 'tower', t: 24, dist: 12 };
+      if (ARRAY_IDS.includes(id)) return { zone: 'station', t: 14, dist: id === 'mvcable' ? 60 : 28 };
+      return { zone: 'station', t: 5, dist: 80 };
+    },
+
+    site: {
+      fog: [700, 2200], sun: [-300, 420, 260], shadow: 360, shadowFar: 1300, ground: 4000, grid: [4000, 200],
+      cam: { near: 0.2, far: 5000, min: 2, max: 2000, polar: 0.5 },
+    },
+    detail: {
+      key: [8, 11, 9], rim: [-9, 6, -7], shadow: 5, shadowFar: 40, grid: [14, 28],
+      cam: { near: 0.05, far: 200, min: 1.5, max: 30, polar: 0.92 },
+    },
+    stationKeys(St) {
+      const S = St.span, F = St.focus, fx = F.pos.x, fy = F.pos.y, fz = F.pos.z, SX = St.skidX;
+      const far = { p: [-S, S * 0.8, S * 1.25], q: [0, 0, S * 0.05] };
+      return {
+        before: [
+          { t: 0, ...far },
+          { t: 5, p: [-S * 0.2, S * 0.66, S * 1.4], q: [0, 0, S * 0.12] },
+          { t: 10, p: [S * 0.6, S * 0.34, S * 0.7], q: [20, 0, 30] },
+          { t: 14, p: [70, 20, 70], q: [25, 2, 25] },
+          { t: 18, p: [40, 12, 36], q: [12, 2, 4] },
+          { t: 21, p: [SX + 17, 7, 17], q: [SX, 2, 0] },
+          { t: 25, p: [SX + 14, 6, -12], q: [SX, 2, 0] },
+          { t: 28, p: [fx + 6, fy + 1.4, fz - 3], q: [fx, fy, fz] },
+          { t: 32, p: [fx + 2.8, fy + 0.3, fz - 0.2], q: [fx, fy, fz] },
+        ],
+        after: [
+          { t: 65, p: [fx + 2.8, fy + 0.3, fz - 0.2], q: [fx, fy, fz] },
+          { t: 66.5, p: [fx + 14, fy + 8, fz + 10], q: [fx, fy, fz] },
+          { t: 68, ...far },
+        ],
+      };
+    },
+    detailKeys: [
+      { t: 32, p: [4.2, 2.4, 5.2], q: [0, 1.15, 0] },
+      { t: 35, p: [4.8, 2.9, 5.6], q: [0, 1.2, 0] },
+      { t: 41, p: [7.2, 5.0, 7.4], q: [0, 1.8, 0] },
+      { t: 46, p: [-5.2, 4.6, 7.8], q: [0, 1.75, 0.3] },
+      { t: 52, p: [-7.0, 3.9, 5.2], q: [0, 1.6, 0.3] },
+      { t: 55, p: [1.6, 2.6, 4.4], q: [0, 1.2, 0.8] },
+      { t: 62, p: [4.6, 2.3, 4.8], q: [0, 1.15, 0.3] },
+      { t: 65, p: [4.2, 2.4, 5.2], q: [0, 1.15, 0] },
+    ],
+  });
+})();
+</script>
+</body>
+</html>

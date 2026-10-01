@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>태양광 드론 경로 최적화</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* claude.ai 게시 골격이 넣어 주던 기본값 */
+body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Layout: 헤더 → [3D 실험대 | 조작 패널] → 설명 5개 절. 3D 장면이 주인공, 나머지는 조용하게. */
+:root{
+  --bg:#eef1f3; --surface:#ffffff; --fg:#17212b; --muted:#5b6875; --line:#d5dce2;
+  --accent:#b8660a; --accent-ink:#ffffff; --accent-soft:#f6e6d2;
+  --scene:#dde6eb; --ground:#b5c09e; --road:#d4d1c6; --panel:#1f3b5c;
+  --good:#1c8f59; --bad:#d2462b;
+  --f-sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1419; --surface:#151d24; --fg:#e3e9ee; --muted:#93a1ad; --line:#26313b;
+  --accent:#f0a53a; --accent-ink:#1a1206; --accent-soft:#33260f;
+  --scene:#0f171d; --ground:#26301f; --road:#3a3934; --panel:#27507e;
+  --good:#3ccf8a; --bad:#ff6a4d; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0e1419; --surface:#151d24; --fg:#e3e9ee; --muted:#93a1ad; --line:#26313b;
+  --accent:#f0a53a; --accent-ink:#1a1206; --accent-soft:#33260f;
+  --scene:#0f171d; --ground:#26301f; --road:#3a3934; --panel:#27507e;
+  --good:#3ccf8a; --bad:#ff6a4d; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-sans);font-size:15px;line-height:1.65}
+.wrap{max-width:1220px;margin:0 auto;padding-inline:16px;padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
+header{display:flex;flex-direction:column;gap:6px;max-width:760px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.2;margin:0;font-weight:700;text-wrap:balance;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted);max-width:65ch}
+.lab{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:16px;align-items:start}
+@media (max-width:880px){.lab{grid-template-columns:minmax(0,1fr)}}
+.viewport{position:relative;height:min(66vh,640px);min-height:360px;border-radius:10px;overflow:hidden;background:var(--scene);border:1px solid var(--line)}
+.viewport canvas{display:block;width:100%;height:100%;touch-action:none}
+.hud{position:absolute;left:12px;top:12px;right:12px;display:flex;flex-wrap:wrap;gap:8px;pointer-events:none}
+.chip{font-family:var(--f-mono);font-size:12px;background:color-mix(in srgb,var(--surface) 88%,transparent);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:4px 9px;font-variant-numeric:tabular-nums;backdrop-filter:blur(4px)}
+.chip.warn{color:var(--bad);border-color:var(--bad)}
+.hint{position:absolute;right:12px;bottom:10px;font-size:12px;color:var(--muted);pointer-events:none}
+.fallback{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px}
+.label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em}
+.seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{flex:1;min-width:0;font:inherit;font-size:13px;padding:7px 6px;border:0;background:transparent;color:var(--fg);cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg);font-weight:600}
+.seg button:focus-visible,.btn:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;gap:8px;align-items:center}
+input[type=range]{flex:1;accent-color:var(--accent)}
+.val{font-family:var(--f-mono);font-size:13px;min-width:52px;text-align:right;font-variant-numeric:tabular-nums}
+.btns{display:flex;gap:8px}
+.btn{font:inherit;font-size:14px;font-weight:600;border-radius:7px;padding:9px 12px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--fg)}
+.btn.primary{flex:1;background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:default}
+select{font:inherit;font-size:13px;padding:6px 8px;border-radius:7px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.stat{background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.stat b{font-family:var(--f-mono);font-weight:500;font-size:19px;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-size:12px;color:var(--muted)}
+.stat b.good{color:var(--good)} .stat b.bad{color:var(--bad)}
+.sorties{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.sorties li{display:grid;grid-template-columns:12px 1fr auto auto;gap:8px;align-items:center;font-variant-numeric:tabular-nums}
+.sorties i{width:12px;height:4px;border-radius:2px}
+.sorties .m{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.note{font-size:12px;color:var(--muted);margin:0}
+.note.bad{color:var(--bad)}
+
+article{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:20px 32px}
+section{display:flex;flex-direction:column;gap:8px;min-width:0;border-top:2px solid var(--fg);padding-top:12px}
+section h2{margin:0;font-size:18px;line-height:1.35;text-wrap:balance}
+section h2 small{display:block;font-family:var(--f-mono);font-weight:400;font-size:12px;color:var(--accent);letter-spacing:.05em}
+section p,section ul{margin:0;max-width:65ch}
+section ul{padding-left:18px}
+.formula{font-family:var(--f-mono);font-size:13px;background:var(--accent-soft);border-radius:6px;padding:10px 12px;overflow-x:auto;white-space:pre;line-height:1.7}
+.fig{overflow-x:auto}
+.fig svg{display:block;max-width:100%;height:auto}
+.fig text{font-family:var(--f-sans);font-size:11px;fill:var(--muted)}
+.fig .pt{fill:var(--fg)} .fig .pl{fill:var(--fg);font-weight:600;font-size:12px}
+.fig .bad{stroke:var(--bad)} .fig .good{stroke:var(--good)} .fig .rest{stroke:var(--muted)}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">태양광 O&amp;M · 드론 점검</div>
+    <h1>태양광 단지에서 드론은 어떤 순서로 날아야 할까</h1>
+    <p>예시 단지(약 0.5 MW, 10열 · 모듈 테이블 480개)에서 드론이 두 가지 임무를 수행합니다. 단지 전체를 열화상으로 훑는 <b>전면 스캔</b>, 그리고 발견된 핫스팟 22곳을 가까이 다시 찍는 <b>결함 점검</b>입니다. 알고리즘과 배터리 한도를 바꿔 가며 경로가 어떻게 달라지는지 보세요.</p>
+  </header>
+
+  <div class="lab">
+    <div class="viewport" id="vp">
+      <div class="hud">
+        <span class="chip" id="hud-mode">결함 점검</span>
+        <span class="chip" id="hud-status">대기 중 · 기지에서 출발 준비</span>
+      </div>
+      <div class="hint">드래그 회전 · 휠/핀치 확대 · 우클릭 이동</div>
+    </div>
+
+    <aside class="panel" aria-label="경로 설정">
+      <div class="field">
+        <span class="label">임무</span>
+        <div class="seg" id="seg-mode">
+          <button id="m-insp" data-v="insp" aria-pressed="true">결함 점검</button>
+          <button id="m-cov" data-v="cov" aria-pressed="false">전면 스캔</button>
+        </div>
+      </div>
+      <div class="field" id="f-algo">
+        <span class="label">방문 순서 정하기</span>
+        <div class="seg" id="seg-algo">
+          <button id="a-naive" data-v="naive" aria-pressed="false">보고서 순서</button>
+          <button id="a-nn" data-v="nn" aria-pressed="false">최근접 이웃</button>
+          <button id="a-2opt" data-v="2opt" aria-pressed="true">+ 2-opt</button>
+        </div>
+      </div>
+      <p class="note" id="cov-note" hidden>고도 25 m, 화각 50°, 측면 중첩 70% → 비행 라인 간격 7 m. 패널 열 하나 위를 한 번씩 지나갑니다.</p>
+      <div class="field">
+        <label class="label" for="bat">배터리 1회 비행 시간 (예비 20% 제외 전)</label>
+        <div class="row"><input type="range" id="bat" min="2" max="12" step="0.5" value="4"><span class="val" id="bat-v">4.0분</span></div>
+      </div>
+      <div class="btns">
+        <button class="btn primary" id="play">▶ 비행 시작</button>
+        <select id="speed" aria-label="재생 속도"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="st-dist">–</b><span>총 비행거리</span></div>
+        <div class="stat"><b id="st-time">–</b><span>작업 시간 (교체 포함)</span></div>
+        <div class="stat"><b id="st-sorties">–</b><span>출격 횟수</span></div>
+        <div class="stat"><b id="st-cmp">–</b><span id="st-cmp-l">보고서 순서 대비</span></div>
+      </div>
+      <div class="field">
+        <span class="label">출격별 비행 (색 = 경로 색)</span>
+        <ul class="sorties" id="sorties"></ul>
+        <p class="note" id="over-note" hidden></p>
+      </div>
+      <button class="btn" id="reseed">핫스팟 위치 다시 뽑기</button>
+    </aside>
+  </div>
+
+  <article>
+    <section>
+      <h2><small>문제 정의</small>드론 경로는 세 가지 문제가 겹친 것</h2>
+      <p>단지 운영자가 드론에게 맡기는 일은 크게 두 가지입니다. 빠짐없이 전부 찍기와 정해진 지점만 골라 들르기. 여기에 배터리라는 제약이 붙습니다.</p>
+      <ul>
+        <li><b>전면 스캔</b>: 커버리지 경로 계획(CPP). 면적을 빈틈없이 덮는 선을 긋습니다.</li>
+        <li><b>결함 점검</b>: 외판원 문제(TSP). N개 지점을 한 번씩 들러 돌아오는 가장 짧은 순서를 찾습니다.</li>
+        <li><b>배터리</b>: 차량 경로 문제(VRP). 한 번에 다 못 돌면 여러 번 출격으로 나눕니다.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><small>전면 스캔 · CPP</small>잔디 깎듯 왕복하는 부스트로페돈 경로</h2>
+      <p>카메라가 땅에 비치는 폭과 사진끼리 겹쳐야 하는 비율로 비행 라인 간격이 정해집니다. 라인은 패널 열과 나란히 긋습니다. 방향 전환이 줄고, 한 열이 영상 가운데에 오래 머뭅니다.</p>
+      <div class="formula">촬영 폭  W = 2 · h · tan(FOV / 2)
+        = 2 · 25 m · tan(25°) ≈ 23.3 m
+라인 간격 = W · (1 − 측면 중첩)
+        = 23.3 m · 0.3 ≈ 7 m  (= 열 간격)</div>
+      <p>640 px 열화상 센서라면 지상 해상도는 약 3.6 cm/px입니다. 고도를 높이면 라인 수는 줄지만 셀 하나에 들어가는 픽셀도 줄어 작은 핫스팟을 놓칩니다.</p>
+    </section>
+
+    <section>
+      <h2><small>결함 점검 · TSP</small>22곳을 도는 순서는 10<sup>20</sup>가지가 넘는다</h2>
+      <p>순서의 가짓수는 22!/2 ≈ 5.6 × 10<sup>20</sup>. 다 따져 볼 수 없으니 빠른 휴리스틱으로 좋은 해를 찾습니다.</p>
+      <ul>
+        <li><b>보고서 순서</b>: 스캔에서 발견된 순서대로. 단지를 이리저리 가로지릅니다.</li>
+        <li><b>최근접 이웃</b>: 지금 위치에서 가장 가까운 곳부터. 빠르지만 마지막에 먼 곳이 남아 긴 귀환 구간이 생깁니다.</li>
+        <li><b>2-opt</b>: 경로에서 서로 교차하는 두 구간을 찾아 뒤집습니다. 더 줄어들지 않을 때까지 반복합니다.</li>
+      </ul>
+      <div class="fig" aria-label="2-opt 교차 제거 그림">
+        <svg viewBox="0 0 330 140" role="img">
+          <g fill="none" stroke-width="2">
+            <path class="rest" stroke-dasharray="4 4" d="M20 30 C -5 55, -5 85, 20 110"/>
+            <path class="rest" stroke-dasharray="4 4" d="M130 30 C 155 55, 155 85, 130 110"/>
+            <line class="bad" x1="20" y1="30" x2="130" y2="110"/>
+            <line class="bad" x1="20" y1="110" x2="130" y2="30"/>
+            <path class="rest" stroke-dasharray="4 4" d="M190 30 C 165 55, 165 85, 190 110"/>
+            <path class="rest" stroke-dasharray="4 4" d="M300 30 C 325 55, 325 85, 300 110"/>
+            <line class="good" x1="190" y1="30" x2="300" y2="30"/>
+            <line class="good" x1="190" y1="110" x2="300" y2="110"/>
+          </g>
+          <g>
+            <circle class="pt" cx="20" cy="30" r="4"/><circle class="pt" cx="20" cy="110" r="4"/><circle class="pt" cx="130" cy="30" r="4"/><circle class="pt" cx="130" cy="110" r="4"/>
+            <circle class="pt" cx="190" cy="30" r="4"/><circle class="pt" cx="190" cy="110" r="4"/><circle class="pt" cx="300" cy="30" r="4"/><circle class="pt" cx="300" cy="110" r="4"/>
+            <text class="pl" x="26" y="22">A</text><text class="pl" x="26" y="128">B</text><text class="pl" x="116" y="22">C</text><text class="pl" x="116" y="128">D</text>
+            <text class="pl" x="196" y="22">A</text><text class="pl" x="196" y="128">B</text><text class="pl" x="286" y="22">C</text><text class="pl" x="286" y="128">D</text>
+            <text x="75" y="138" text-anchor="middle">A–D, B–C 교차</text>
+            <text x="245" y="138" text-anchor="middle">A–C, B–D 로 바꾸면 더 짧음</text>
+            <text x="160" y="74" text-anchor="middle" style="font-size:16px">→</text>
+          </g>
+        </svg>
+      </div>
+      <p>위 3D에서 <b>+ 2-opt</b>를 누르면 교차가 하나씩 풀리는 과정이 재생됩니다.</p>
+    </section>
+
+    <section>
+      <h2><small>배터리 · VRP</small>경로를 먼저 짜고, 배터리에 맞게 자른다</h2>
+      <p>이 데모는 “경로 먼저, 분할 나중(route-first, cluster-second)” 방식을 씁니다. 한 줄로 이어진 최적 순서를 따라가다가, 다음 지점에 들렀다 기지로 돌아올 시간이 남은 배터리를 넘으면 그 앞에서 끊고 기지로 복귀합니다.</p>
+      <div class="formula">출격 시간 = 이·착륙(고도 ÷ 3 m/s × 2)
+         + 수평거리 ÷ 순항속도
+         + 지점당 호버링 4 s
+조건: 출격 시간 ≤ 배터리 × (1 − 예비 20%)</div>
+      <p>배터리를 줄여 보세요. 출격이 늘고, 교체 시간(1회 90 s)과 기지 왕복 거리가 붙습니다. 실제 기체는 25~40분을 날지만 이 예시 단지가 작아서 배터리를 일부러 짧게 잡을 수 있게 했습니다.</p>
+    </section>
+
+    <section>
+      <h2><small>현장 변수</small>실제 운용에서 비용에 더하는 것들</h2>
+      <ul>
+        <li><b>일사량</b>: 열화상 점검은 일사량 600 W/m² 이상에서 해야 결함이 드러납니다(IEC TS 62446-3). 비행 가능한 시간대가 한낮으로 좁아집니다.</li>
+        <li><b>바람</b>: 맞바람 구간은 더 느리고 배터리를 더 씁니다. 거리 대신 방향별 비행 시간을 비용으로 두면 비대칭 TSP가 됩니다.</li>
+        <li><b>금지 구역</b>: 송전선, 변전 설비, 인버터실 위를 피하도록 경로 그래프에서 해당 구간을 뺍니다.</li>
+        <li><b>촬영 각도</b>: 태양 반사가 카메라에 들어오지 않게 비행 방향과 짐벌 각도를 정합니다.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><small>데모의 단순화</small>이 화면이 빼 놓은 것</h2>
+      <ul>
+        <li>거리는 수평 직선거리로 계산하고, 선회 가감속은 무시했습니다.</li>
+        <li>2-opt는 최적해를 보장하지 않습니다. 지점이 수백 개면 Or-opt, 담금질(simulated annealing), OR-Tools 같은 솔버를 씁니다.</li>
+        <li>분할은 탐욕적입니다. 여러 대가 동시에 나는 경우나 도킹 스테이션이 여러 곳인 경우는 다루지 않았습니다.</li>
+      </ul>
+    </section>
+  </article>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const vp = $('#vp');
+// 전시관 썸네일 촬영(#thumb) 때는 움직임을 멈춥니다
+const still = location.hash === '#thumb';
+const reduceMotion = still || matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+if (!window.THREE) { vp.insertAdjacentHTML('beforeend','<div class="fallback">3D 라이브러리를 불러오지 못했습니다. 네트워크를 확인하고 새로고침하세요.</div>'); return; }
+
+// ---------- 단지 · 비행 파라미터 ----------
+const V = (x,y,z) => new THREE.Vector3(x,y,z);
+const CFG = {
+  insp:{alt:12, v:8, hover:4, hfov:50, vfov:40, label:'결함 점검'},
+  cov: {alt:25, v:5, hover:0, hfov:50, vfov:40, label:'전면 스캔'},
+  vz:3, reserve:0.2, swap:90, visV:34
+};
+const BASE = V(-74,0,44);
+const ROWS=10, ROWGAP=7, PER=24, PITCH=2.25, STARTS=[-57,5.25];
+const rowZ = r => -31.5 + r*ROWGAP;
+const tables=[];
+for(let r=0;r<ROWS;r++) for(const s of STARTS) for(let i=0;i<PER;i++) tables.push({x:s+i*PITCH, z:rowZ(r), row:r});
+const SORTIE_COLORS=['#f59e0b','#0ea5e9','#d946ef','#10b981','#ef4444','#8b5cf6','#eab308','#14b8a6'];
+const N_DEFECTS=22;
+
+const state={mode:'insp', algo:'2opt', battery:4, mult:1, seed:7, defects:[], route:null,
+  playing:false, s:0, j:0, pause:0, msg:'', done:false, animTimer:null, animating:false, yaw:0, visited:new Set()};
+
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const h = (a,b) => Math.hypot(a.x-b.x, a.z-b.z);
+const polyLen = pts => { let L=0; for(let i=1;i<pts.length;i++) L+=h(pts[i-1],pts[i]); return L; };
+const fmtT = s => { s=Math.round(s); return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; };
+const fmtD = m => m>=1000 ? `${(m/1000).toFixed(2)} km` : `${Math.round(m)} m`;
+
+// ---------- 장면 ----------
+let renderer;
+try { renderer = new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:still}); }
+catch(e){ vp.insertAdjacentHTML('beforeend','<div class="fallback">이 브라우저에서 WebGL을 쓸 수 없어 3D 장면을 그리지 못했습니다.</div>'); return; }
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+vp.prepend(renderer.domElement);
+
+const scene=new THREE.Scene();
+scene.fog=new THREE.Fog(0xffffff,160,340);
+const camera=new THREE.PerspectiveCamera(42,1,0.5,800);
+camera.position.set(62,78,108);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.target.set(-4,6,4);
+controls.enableDamping=true; controls.maxPolarAngle=1.42; controls.minDistance=25; controls.maxDistance=260;
+
+scene.add(new THREE.HemisphereLight(0xeaf2ff,0x5a5a40,0.75));
+const sun=new THREE.DirectionalLight(0xfff4e0,0.9);
+sun.position.set(-40,90,70); sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-90,right:90,top:70,bottom:-70,near:10,far:260});
+scene.add(sun);
+
+const groundMat=new THREE.MeshLambertMaterial({color:0xb5c09e});
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(260,200),groundMat);
+ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+const roadMat=new THREE.MeshLambertMaterial({color:0xd4d1c6});
+function addRoad(w,d,x,z){const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),roadMat);m.rotation.x=-Math.PI/2;m.position.set(x,0.02,z);m.receiveShadow=true;scene.add(m);}
+addRoad(6,84,0,0); addRoad(150,6,-3,42); addRoad(6,90,-74,0);
+
+// 패널 (인스턴스)
+const panelMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.35,metalness:0.3});
+const panels=new THREE.InstancedMesh(new THREE.BoxGeometry(2.1,0.08,3.3),panelMat,tables.length);
+panels.castShadow=true; panels.receiveShadow=true;
+const m4=new THREE.Matrix4(), q=new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(25),0,0)), one=V(1,1,1);
+const panelColor=new THREE.Color(0x1f3b5c), defectColor=new THREE.Color(0xe0562f);
+tables.forEach((t,i)=>{ m4.compose(V(t.x,1.7,t.z),q,one); panels.setMatrixAt(i,m4); panels.setColorAt(i,panelColor); });
+scene.add(panels);
+const rackMat=new THREE.MeshLambertMaterial({color:0x6b7480});
+for(let r=0;r<ROWS;r++) for(const s of STARTS){
+  const len=(PER-1)*PITCH+2.1, rack=new THREE.Mesh(new THREE.BoxGeometry(len,1.1,0.14),rackMat);
+  rack.position.set(s+(PER-1)*PITCH/2,0.55,rowZ(r)); rack.castShadow=true; scene.add(rack);
+}
+// 인버터 · 변전 설비
+const boxMat=new THREE.MeshLambertMaterial({color:0xcfd5db});
+[[0,-44],[18,48]].forEach(([x,z])=>{const b=new THREE.Mesh(new THREE.BoxGeometry(8,3.2,4),boxMat);b.position.set(x,1.6,z);b.castShadow=true;scene.add(b);});
+// 펜스
+const fenceGeo=new THREE.BufferGeometry().setFromPoints([V(-82,1.6,-46),V(66,1.6,-46),V(66,1.6,52),V(-82,1.6,52),V(-82,1.6,-46)]);
+const fenceMat=new THREE.LineBasicMaterial({color:0x7c8792});
+scene.add(new THREE.Line(fenceGeo,fenceMat));
+// 기지(도킹 패드)
+const pad=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.4,0.25,40),new THREE.MeshLambertMaterial({color:0x3b4550}));
+pad.position.copy(BASE).setY(0.13); pad.receiveShadow=true; scene.add(pad);
+const padRing=new THREE.Mesh(new THREE.RingGeometry(2.4,2.8,40),new THREE.MeshBasicMaterial({color:0xf0a53a,side:THREE.DoubleSide}));
+padRing.rotation.x=-Math.PI/2; padRing.position.copy(BASE).setY(0.27); scene.add(padRing);
+
+// 드론
+const drone=new THREE.Group();
+const white=new THREE.MeshStandardMaterial({color:0xeef1f4,roughness:0.5});
+const dark=new THREE.MeshStandardMaterial({color:0x2a3138,roughness:0.6});
+const body=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.36,1.3),white); body.castShadow=true; drone.add(body);
+[45,-45].forEach(a=>{const arm=new THREE.Mesh(new THREE.BoxGeometry(2.8,0.1,0.14),dark);arm.rotation.y=THREE.MathUtils.degToRad(a);arm.castShadow=true;drone.add(arm);});
+const rotors=[];
+const rotorMat=new THREE.MeshBasicMaterial({color:0x9aa6b2,transparent:true,opacity:0.55,side:THREE.DoubleSide});
+[[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([sx,sz])=>{
+  const r=new THREE.Mesh(new THREE.BoxGeometry(1.25,0.03,0.12),rotorMat);
+  r.position.set(sx*0.99,0.16,sz*0.99); drone.add(r); rotors.push(r);
+});
+const gimbal=new THREE.Mesh(new THREE.BoxGeometry(0.34,0.3,0.34),dark); gimbal.position.set(0,-0.3,0.45); drone.add(gimbal);
+drone.scale.setScalar(1.9);
+drone.position.copy(BASE).setY(0.5);
+scene.add(drone);
+
+// 카메라 촬영 영역
+const fpMat=new THREE.MeshBasicMaterial({color:0x38bdf8,transparent:true,opacity:0.18,depthWrite:false,side:THREE.DoubleSide});
+const footprint=new THREE.Mesh(new THREE.PlaneGeometry(1,1),fpMat);
+footprint.rotation.order='YXZ'; footprint.rotation.x=-Math.PI/2;
+const fpEdge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(1,1)),new THREE.LineBasicMaterial({color:0x38bdf8}));
+footprint.add(fpEdge); footprint.visible=false; scene.add(footprint);
+
+// 경로 · 핫스팟 표시 객체
+let plannedMesh=null, flownMesh=null, dropLines=null, rings=[];
+const plannedMat=new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:0.32,depthWrite:false,side:THREE.DoubleSide});
+const flownMat=new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide});
+const dropMat=new THREE.LineDashedMaterial({color:0x5b6875,dashSize:0.8,gapSize:0.6,transparent:true,opacity:0.7});
+const ringGeo=new THREE.RingGeometry(1.0,1.45,36);
+
+// ---------- 테마 ----------
+function applyTheme(){
+  const cs=getComputedStyle(document.documentElement), g=k=>cs.getPropertyValue(k).trim();
+  const bg=new THREE.Color(g('--scene')||'#dde6eb');
+  scene.background=bg; scene.fog.color.copy(bg);
+  groundMat.color.set(g('--ground')||'#b5c09e');
+  roadMat.color.set(g('--road')||'#d4d1c6');
+  dropMat.color.set(g('--muted')||'#5b6875');
+  panelColor.set(g('--panel')||'#1f3b5c');
+  paintPanels();
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+function paintPanels(){
+  const def=new Set(state.defects.map(d=>d.table));
+  tables.forEach((t,i)=>panels.setColorAt(i, def.has(i)?defectColor:panelColor));
+  panels.instanceColor.needsUpdate=true;
+}
+
+// ---------- 알고리즘 ----------
+function makeDefects(seed){
+  const r=rng(seed), idx=new Set();
+  while(idx.size<N_DEFECTS) idx.add(Math.floor(r()*tables.length));
+  return [...idx].map((k,i)=>({table:k,x:tables[k].x,z:tables[k].z,id:i+1}));
+}
+function orderNN(pts){
+  const left=pts.slice(), out=[]; let cur=BASE;
+  while(left.length){ let bi=0,bd=Infinity; left.forEach((p,i)=>{const d=h(cur,p); if(d<bd){bd=d;bi=i;}}); cur=left.splice(bi,1)[0]; out.push(cur); }
+  return out;
+}
+function twoOpt(order){
+  let t=[BASE,...order,BASE]; const snaps=[]; let improved=true, guard=0;
+  while(improved && guard++<300){
+    improved=false;
+    for(let i=1;i<t.length-2;i++) for(let k=i+1;k<t.length-1;k++){
+      const delta=h(t[i-1],t[k])+h(t[i],t[k+1])-h(t[i-1],t[i])-h(t[k],t[k+1]);
+      if(delta<-1e-6){ t=t.slice(0,i).concat(t.slice(i,k+1).reverse(),t.slice(k+1)); snaps.push(t.slice(1,-1)); improved=true; }
+    }
+  }
+  return {order:t.slice(1,-1),snaps};
+}
+function coverageItems(){
+  const c=CFG.cov, items=[];
+  for(let r=ROWS-1, n=0; r>=0; r--, n++){
+    const z=rowZ(r), a=V(-61,c.alt,z), b=V(61,c.alt,z);
+    items.push({pts: n%2===0 ? [a,b] : [b,a]});
+  }
+  return items;
+}
+// 경로 먼저, 배터리에 맞춰 분할
+function plan(items,m){
+  const c=CFG[m], usable=state.battery*60*(1-CFG.reserve), baseAlt=V(BASE.x,c.alt,BASE.z), climb=c.alt/CFG.vz;
+  const sorties=[]; let cur;
+  const open=()=>{cur={items:[],t:2*climb,d:2*c.alt,last:baseAlt}; sorties.push(cur);};
+  open();
+  for(const it of items){
+    const len=polyLen(it.pts), hov=it.defect?c.hover:0;
+    const need=from=>(h(from,it.pts[0])+len+h(it.pts[it.pts.length-1],baseAlt))/c.v+hov;
+    if(cur.items.length && cur.t+need(cur.last)>usable) open();
+    const to=h(cur.last,it.pts[0]);
+    cur.items.push(it); cur.t+=(to+len)/c.v+hov; cur.d+=to+len; cur.last=it.pts[it.pts.length-1];
+  }
+  let over=false;
+  for(const s of sorties){ const back=h(s.last,baseAlt); s.t+=back/c.v; s.d+=back; if(s.t>usable+1e-6) over=true; }
+  const dist=sorties.reduce((a,s)=>a+s.d,0), flight=sorties.reduce((a,s)=>a+s.t,0);
+  return {sorties,over,usable,dist,total:flight+CFG.swap*(sorties.length-1)};
+}
+function itemsFor(order){ const c=CFG.insp; return order.map(p=>({pts:[V(p.x,c.alt,p.z)],defect:p})); }
+
+// 3D 경로 재표본화
+function buildSamples(pl,m){
+  const c=CFG[m], pts=[];
+  pl.sorties.forEach((s,si)=>{
+    pts.push({p:BASE.clone(),si}); pts.push({p:V(BASE.x,c.alt,BASE.z),si});
+    s.items.forEach(it=>it.pts.forEach(p=>pts.push({p:p.clone(),si,wp:it.defect||null})));
+    pts.push({p:V(BASE.x,c.alt,BASE.z),si}); pts.push({p:BASE.clone(),si,land:true});
+  });
+  const S=[{p:pts[0].p.clone(),si:0,d:0,t:0}]; let d=0,t=0;
+  for(let i=1;i<pts.length;i++){
+    const a=pts[i-1].p,b=pts[i].p,L=a.distanceTo(b);
+    if(L<1e-6){ if(pts[i-1].land) t+=CFG.swap; continue; }
+    const v=Math.abs(b.y-a.y)>h(a,b)?CFG.vz:c.v, n=Math.max(1,Math.ceil(L/0.8));
+    for(let k=1;k<=n;k++){ d+=L/n; t+=L/n/v; S.push({p:a.clone().lerp(b,k/n),si:pts[i].si,d,t}); }
+    if(pts[i].wp){ S[S.length-1].wp=pts[i].wp; t+=c.hover; }
+    if(pts[i].land) S[S.length-1].land=true;
+  }
+  return S;
+}
+function ribbonGeo(S,w,yOff){
+  const n=S.length,pos=new Float32Array(n*6),col=new Float32Array(n*6),idx=[];
+  let dx0=1,dz0=0; const cc=SORTIE_COLORS.map(x=>new THREE.Color(x));
+  for(let i=0;i<n;i++){
+    const a=S[Math.max(0,i-1)].p,b=S[Math.min(n-1,i+1)].p,dx=b.x-a.x,dz=b.z-a.z,L=Math.hypot(dx,dz);
+    if(L>1e-3){dx0=dx/L;dz0=dz/L;}
+    const ox=-dz0*w/2,oz=dx0*w/2,p=S[i].p,c=cc[S[i].si%cc.length];
+    pos.set([p.x+ox,p.y+yOff,p.z+oz,p.x-ox,p.y+yOff,p.z-oz],i*6);
+    col.set([c.r,c.g,c.b,c.r,c.g,c.b],i*6);
+    if(i<n-1) idx.push(2*i,2*i+1,2*i+2,2*i+1,2*i+3,2*i+2);
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  g.setIndex(idx); return g;
+}
+
+// ---------- 경로 적용 ----------
+function disposeMesh(o){ if(o){ scene.remove(o); o.geometry.dispose(); } }
+function applyRoute(order,{baseline}={}){
+  const m=state.mode;
+  const items = m==='insp' ? itemsFor(order) : coverageItems();
+  const pl=plan(items,m), S=buildSamples(pl,m);
+  state.route={pl,S,m};
+  disposeMesh(plannedMesh); disposeMesh(flownMesh); disposeMesh(dropLines);
+  plannedMesh=new THREE.Mesh(ribbonGeo(S,1.1,0),plannedMat);
+  flownMesh=new THREE.Mesh(ribbonGeo(S,1.25,0.06),flownMat);
+  flownMesh.geometry.setDrawRange(0,0);
+  scene.add(plannedMesh,flownMesh);
+  if(m==='insp'){
+    const seg=[]; state.defects.forEach(d=>{seg.push(V(d.x,CFG.insp.alt,d.z),V(d.x,2.6,d.z));});
+    dropLines=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(seg),dropMat);
+    dropLines.computeLineDistances(); scene.add(dropLines);
+  } else dropLines=null;
+  const c=CFG[m], W=2*c.alt*Math.tan(THREE.MathUtils.degToRad(c.hfov/2)), H=2*c.alt*Math.tan(THREE.MathUtils.degToRad(c.vfov/2));
+  footprint.scale.set(W,H,1);
+  resetFlight();
+  renderStats(pl,baseline);
+}
+function renderStats(pl,baseline){
+  $('#st-dist').textContent=fmtD(pl.dist);
+  $('#st-time').textContent=fmtT(pl.total);
+  $('#st-sorties').textContent=`${pl.sorties.length}회`;
+  const cmp=$('#st-cmp');
+  cmp.className='';
+  if(state.mode==='insp'){
+    $('#st-cmp-l').textContent='보고서 순서 대비 거리';
+    if(!baseline || state.algo==='naive'){ cmp.textContent='기준'; }
+    else { const r=(pl.dist-baseline)/baseline*100; cmp.textContent=`${r<=0?'−':'+'}${Math.abs(r).toFixed(0)}%`; cmp.className=r<=0?'good':'bad'; }
+  } else {
+    $('#st-cmp-l').textContent='비행 라인 (간격 7 m)';
+    cmp.textContent=`${ROWS}줄`;
+  }
+  const usable=pl.usable;
+  $('#sorties').innerHTML=pl.sorties.map((s,i)=>{
+    const pct=Math.round(s.t/(state.battery*60)*100);
+    return `<li><i style="background:${SORTIE_COLORS[i%SORTIE_COLORS.length]}"></i><span>${i+1}차 출격${state.mode==='insp'?` · ${s.items.length}곳`:` · ${s.items.length}줄`}</span><span class="m">${fmtT(s.t)}</span><span class="m">배터리 ${pct}%</span></li>`;
+  }).join('');
+  const on=$('#over-note');
+  on.hidden=!pl.over; on.className='note bad';
+  on.textContent=pl.over?`한 구간만으로도 사용 가능 시간(${fmtT(usable)})을 넘는 출격이 있습니다. 배터리를 늘리세요.`:'';
+}
+function setRings(){
+  rings.forEach(r=>scene.remove(r)); rings=[];
+  state.defects.forEach(d=>{
+    const r=new THREE.Mesh(ringGeo,new THREE.MeshBasicMaterial({color:0xe0562f,side:THREE.DoubleSide,transparent:true,opacity:0.9}));
+    r.rotation.x=-Math.PI/2; r.position.set(d.x,2.9,d.z); r.userData.id=d.id; scene.add(r); rings.push(r);
+  });
+}
+function markVisited(d){
+  state.visited.add(d.id);
+  const r=rings.find(x=>x.userData.id===d.id); if(r){ r.material.color.set(0x2fbf71); r.scale.setScalar(1); }
+}
+
+function rebuild({anim=false}={}){
+  clearInterval(state.animTimer); state.animating=false;
+  $('#play').disabled=false;
+  if(state.mode==='cov'){ applyRoute(null); hud(); return; }
+  const naive=state.defects.slice(), nn=orderNN(state.defects);
+  const baseline=plan(itemsFor(naive),'insp').dist;
+  if(state.algo==='naive') applyRoute(naive,{baseline});
+  else if(state.algo==='nn') applyRoute(nn,{baseline});
+  else {
+    const {order,snaps}=twoOpt(nn);
+    if(anim && snaps.length && !reduceMotion){
+      state.animating=true; $('#play').disabled=true;
+      applyRoute(nn,{baseline}); let k=0;
+      hud(`2-opt · 최근접 이웃 경로에서 시작`);
+      state.animTimer=setInterval(()=>{
+        applyRoute(snaps[k],{baseline}); k++;
+        hud(`2-opt · 교차 제거 ${k}/${snaps.length}`);
+        if(k>=snaps.length){ clearInterval(state.animTimer); state.animating=false; $('#play').disabled=false; setTimeout(()=>hud(),900); }
+      },Math.max(140,1800/snaps.length));
+    } else applyRoute(order,{baseline});
+  }
+  hud();
+}
+
+// ---------- 비행 ----------
+function resetFlight(){
+  state.playing=false; state.s=0; state.j=0; state.pause=0; state.done=false; state.msg='';
+  state.visited.clear();
+  rings.forEach(r=>r.material.color.set(0xe0562f));
+  drone.position.copy(BASE).setY(0.5);
+  footprint.visible=false;
+  if(flownMesh) flownMesh.geometry.setDrawRange(0,0);
+  $('#play').textContent='▶ 비행 시작';
+}
+function hud(text){
+  $('#hud-mode').textContent=CFG[state.mode].label+(state.mode==='insp'?` · ${ {naive:'보고서 순서',nn:'최근접 이웃','2opt':'최근접 이웃 + 2-opt'}[state.algo] }`:' · 부스트로페돈');
+  const st=$('#hud-status'); st.classList.remove('warn');
+  if(text){ st.textContent=text; return; }
+  const R=state.route; if(!R) return;
+  const S=R.S, j=Math.min(state.j,S.length-1), si=S[j].si, n=R.pl.sorties.length;
+  const nxt=S[Math.min(j+1,S.length-1)], f=nxt.d>S[j].d?(state.s-S[j].d)/(nxt.d-S[j].d):0;
+  const t=S[j].t+(nxt.t-S[j].t)*Math.max(0,Math.min(1,f));
+  let s=`${si+1}/${n}차 출격 · 작업 경과 ${fmtT(t)}`;
+  if(state.mode==='insp') s+=` · 점검 ${state.visited.size}/${N_DEFECTS}`;
+  if(state.msg) s+=` · ${state.msg}`;
+  if(!state.playing && state.s===0) s='대기 중 · 기지에서 출발 준비';
+  if(state.done) s=`임무 완료 · ${n}회 출격 · ${fmtT(R.pl.total)}`;
+  st.textContent=s;
+}
+function advance(dt){
+  const S=state.route.S, last=S.length-1;
+  if(state.pause>0){ state.pause-=dt; if(state.pause<=0) state.msg=''; return; }
+  const target=state.s+CFG.visV*state.mult*dt; let stopped=false;
+  while(state.j<last && S[state.j+1].d<=target){
+    state.j++; const smp=S[state.j];
+    if(smp.wp){ markVisited(smp.wp); state.s=smp.d; state.pause=0.45/Math.sqrt(state.mult); state.msg=`핫스팟 #${smp.wp.id} 호버링 촬영`; stopped=true; break; }
+    if(smp.land && state.j<last){ state.s=smp.d; state.pause=0.9/Math.sqrt(state.mult); state.msg='배터리 교체'; stopped=true; break; }
+  }
+  if(!stopped) state.s=Math.min(target,S[last].d);
+  if(state.j>=last){ state.j=last; state.playing=false; state.done=true; $('#play').textContent='↺ 다시 비행'; }
+}
+function placeDrone(dt){
+  const S=state.route.S, last=S.length-1, j=Math.min(state.j,last), b=S[Math.min(j+1,last)], a=S[j];
+  const f=b.d>a.d?Math.max(0,Math.min(1,(state.s-a.d)/(b.d-a.d))):0;
+  if(state.s>0) drone.position.copy(a.p).lerp(b.p,f).setY(Math.max(0.5,a.p.y+(b.p.y-a.p.y)*f));
+  const dx=b.p.x-a.p.x,dz=b.p.z-a.p.z;
+  if(Math.hypot(dx,dz)>0.05){ const ty=Math.atan2(dx,dz); let d=ty-state.yaw; d=Math.atan2(Math.sin(d),Math.cos(d)); state.yaw+=d*Math.min(1,dt*6); }
+  drone.rotation.y=state.yaw;
+  flownMesh.geometry.setDrawRange(0,j*6);
+  const alt=CFG[state.mode].alt;
+  footprint.visible=drone.position.y>alt-0.6;
+  footprint.position.set(drone.position.x,2.7,drone.position.z);
+  footprint.rotation.y=state.yaw;
+}
+
+// ---------- 루프 ----------
+function resize(){ const w=vp.clientWidth,hh=vp.clientHeight; renderer.setSize(w,hh,false); camera.aspect=w/hh; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(vp);
+let lastT=performance.now(), hudAcc=0;
+function tick(now){
+  const dt=Math.min(0.05,(now-lastT)/1000); lastT=now;
+  if(state.playing && state.route) advance(dt);
+  if(state.route && (state.playing || state.done)) placeDrone(dt);
+  const airborne=drone.position.y>0.6;
+  if(!reduceMotion) rotors.forEach((r,i)=>r.rotation.y+=(airborne?38:0)*dt*(i%2?1:-1));
+  const pulse=1+0.18*Math.sin(now/260);
+  rings.forEach(r=>{ if(!state.visited.has(r.userData.id)) r.scale.setScalar(reduceMotion?1:pulse); });
+  hudAcc+=dt; if(state.playing && hudAcc>0.1 && !state.animating){ hud(); hudAcc=0; }
+  controls.update(); renderer.render(scene,camera);
+  requestAnimationFrame(tick);
+}
+
+// ---------- UI ----------
+function setPressed(seg,v){ seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===v))); }
+$('#seg-mode').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b||b.dataset.v===state.mode) return;
+  state.mode=b.dataset.v; setPressed($('#seg-mode'),state.mode);
+  $('#f-algo').hidden=state.mode!=='insp'; $('#cov-note').hidden=state.mode!=='cov';
+  dropLines&&(dropLines.visible=state.mode==='insp');
+  rebuild();
+});
+$('#seg-algo').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  state.algo=b.dataset.v; setPressed($('#seg-algo'),state.algo); rebuild({anim:state.algo==='2opt'});
+});
+$('#bat').addEventListener('input',e=>{ state.battery=+e.target.value; $('#bat-v').textContent=`${state.battery.toFixed(1)}분`; rebuild(); });
+$('#speed').addEventListener('change',e=>{ state.mult=+e.target.value; });
+$('#play').addEventListener('click',()=>{
+  if(state.animating) return;
+  if(state.done){ resetFlight(); }
+  state.playing=!state.playing;
+  $('#play').textContent=state.playing?'❚❚ 일시정지':'▶ 이어서 비행';
+  hud();
+});
+$('#reseed').addEventListener('click',()=>{
+  state.seed=(state.seed*7919+13)%100000; state.defects=makeDefects(state.seed);
+  paintPanels(); setRings(); rebuild({anim:state.mode==='insp'&&state.algo==='2opt'});
+});
+
+// ---------- 시작 ----------
+state.defects=makeDefects(state.seed);
+applyTheme(); setRings(); rebuild(); resize();
+requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
