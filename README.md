@@ -61,6 +61,6 @@ Claude에게 맡길 때는 이 폴더에서 아티팩트 링크와 함께 "이 �
 
 ## 공개 저장소와 로컬 전용 작품
 
-이 폴더는 공개 저장소 https://github.com/Gridex-Korea/gridex-gallery 입니다. 팬 작품처럼 공개하지 않을 작품은 항목을 `exhibits.local.js`에 적고, 작품 파일·썸네일과 함께 `.gitignore`에 넣습니다. 이 PC의 전시관에서는 보이지만 저장소에는 올라가지 않습니다.
+이 폴더는 공개 저장소 https://github.com/Gridex-Korea/gridex-gallery 이고, main 브랜치가 GitHub Pages로 https://gridex-korea.github.io/gridex-gallery/ 에 그대로 배포됩니다(push하면 1~2분 뒤 반영). `.nojekyll`은 파일을 변환 없이 내보내게 하는 표시라 지우지 마세요. 팬 작품처럼 공개하지 않을 작품은 항목을 `exhibits.local.js`에 적고, 작품 파일·썸네일과 함께 `.gitignore`에 넣습니다. 이 PC의 전시관에서는 보이지만 저장소에는 올라가지 않습니다.
 
 공개 배포는 이 폴더를 통째로 올리지 말고 저장소에서 받은 사본으로 하세요. 폴더째 올리면 로컬 전용 작품도 함께 나갑니다.

@@ -26,3 +26,4 @@ Claude와 만든 해부도·3D 구성도를 모아 실행하는 로컬 정적 �
 - 공개 저장소다: https://github.com/Gridex-Korea/gridex-gallery . 커밋 작성자는 이 저장소의 로컬 설정(gridex-khj noreply 메일)을 쓴다. 개인 정보·키·사내 자료는 올리지 않는다.
 - 팬 작품 등 공개하지 않을 작품은 `exhibits.local.js`(로컬 전용 목록)에 넣고 작품 파일·썸네일과 함께 `.gitignore`에 적는다. 마징가 Z 2점(AG-001, AG-002)이 여기에 있다.
 - 공개 배포는 저장소 사본으로 한다. 이 폴더를 통째로 올리면 로컬 전용 작품도 나간다.
+- 배포: GitHub Pages, main 브랜치 루트 → https://gridex-korea.github.io/gridex-gallery/ . main에 push하면 다시 배포된다. 사이트가 하위 경로(`/gridex-gallery/`)에서 열리므로 링크와 파일 경로는 상대 경로로 둔다. `.nojekyll`은 지우지 않는다.
