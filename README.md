@@ -1,5 +1,8 @@
 # 해부도 전시관
 
+> 소속: [Gridex-Korea](https://github.com/Gridex-Korea) · 저장소: [Gridex-Korea/gridex-gallery](https://github.com/Gridex-Korea/gridex-gallery) · 공개
+
+
 Claude와 대화하며 만든 해부도와 3D 구성도를 모아 두고 실행해 보는 로컬 전시관입니다. 빌드 과정이 없는 정적 웹 페이지라서 이 폴더만 있으면 됩니다.
 
 ## 실행
