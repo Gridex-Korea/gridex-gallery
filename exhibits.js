@@ -11,6 +11,20 @@ window.GALLERY = {
 
 window.EXHIBITS = [
   {
+    id: "mmc-converter-3d-v2",
+    no: "AG-012",
+    title: "MMC 컨버터 해부도 2판",
+    type: "해부도",
+    format: "3D",
+    summary: "AG-003을 보완한 판입니다. 커패시터 전압 정렬로 밸브 타워의 SM이 실제로 켜지고 꺼지며, 상·하암 전압의 계단 파형을 함께 봅니다. 서브모듈 회로에 다이오드를 그려 삽입·바이패스·블록과 전류 방향별 도통 경로를 구분합니다.",
+    features: ["자동 투어", "SM 정렬 동작", "스위칭 도통표", "부품 리스트"],
+    made: "2026-11-02",
+    model: "Claude Opus 5.5",
+    effort: "",
+    artifact: "",
+    thumb: { zoom: 1.6, focus: "3% 32%" }
+  },
+  {
     id: "cheongwadae-3d",
     no: "AG-011",
     title: "청와대 본관 짓기",
